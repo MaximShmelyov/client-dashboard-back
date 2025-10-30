@@ -19,6 +19,7 @@ paths:
     post:
       tags: [Auth]
       summary: Register a new user
+      security: []
       requestBody:
         required: true
         content:
@@ -49,6 +50,7 @@ paths:
     post:
       tags: [Auth]
       summary: Login and receive tokens
+      security: []
       requestBody:
         required: true
         content:
@@ -85,6 +87,7 @@ paths:
     post:
       tags: [Auth]
       summary: Refresh access token using refresh cookie
+      security: []
       responses:
         '200':
           description: New access token issued
@@ -161,9 +164,6 @@ components:
     User:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
         email:
           type: string
           format: email

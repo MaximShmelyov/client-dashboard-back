@@ -1,45 +1,69 @@
-import { Router } from "express";
+import {Router} from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { prisma } from "../prisma";
-import { ENV } from "../env";
+import {prisma} from "../prisma";
+import {ENV} from "../env";
+import {components, paths} from '../types/openapi';
+
+type RegisterRequest = components['schemas']['RegisterRequest'];
+type AuthResponse = components['schemas']['AuthResponse'];
+type RegisterConflictResponse = paths['/auth/register']['post']['responses']['409']['content']['application/json'];
 
 const router = Router();
 
 // helper: issue tokens
 function generateTokens(userId: number) {
-    const accessToken = jwt.sign({ userId }, ENV.ACCESS_SECRET, { expiresIn: "15m" });
-    const refreshToken = jwt.sign({ userId }, ENV.REFRESH_SECRET, { expiresIn: "7d" });
-    return { accessToken, refreshToken };
+    if (!ENV.ACCESS_TOKEN_EXPIRES_IN) throw new Error('');
+    if (!ENV.ACCESS_SECRET) throw new Error('');
+    const accessToken = jwt.sign({userId}, ENV.ACCESS_SECRET, {expiresIn: ENV.ACCESS_TOKEN_EXPIRES_IN});
+    const refreshToken = jwt.sign({userId}, ENV.REFRESH_SECRET, {expiresIn: ENV.REFRESH_TOKEN_EXPIRES_IN});
+    return {accessToken, refreshToken};
 }
 
 router.post("/register", async (req, res) => {
-    const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: "Missing data" });
+    const body: RegisterRequest = req.body;
+    const {email, password, name} = body;
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) return res.status(400).json({ error: "User already exists" });
+    const existing = await prisma.user.findUnique({where: {email}});
+    if (existing) {
+        const conflictResponse: RegisterConflictResponse = {
+            statusCode: 409,
+            error: 'Conflict',
+            message: 'User already exists',
+            details: null,
+        };
+        return res.status(409).json(conflictResponse);
+    }
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({ data: { email, password: hashed } });
+    const user = await prisma.user.create({data: {email, password: hashed, name}});
 
     const tokens = generateTokens(user.id);
+
+    const authResponse: AuthResponse = {
+        user: {
+            email: user.email,
+            name: user.name || undefined,
+        },
+        accessToken: tokens.accessToken,
+    };
+
     res.cookie("refreshToken", tokens.refreshToken, {
         httpOnly: true,
         secure: true,
         sameSite: "none",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: ENV.COOKIES_MAX_AGE,
     });
-    res.json({ accessToken: tokens.accessToken, user: { id: user.id, email: user.email } });
+    res.status(201).json(authResponse);
 });
 
 router.post("/login", async (req, res) => {
-    const { email, password } = req.body;
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(400).json({ error: "Invalid credentials" });
+    const {email, password} = req.body;
+    const user = await prisma.user.findUnique({where: {email}});
+    if (!user) return res.status(400).json({error: "Invalid credentials"});
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(400).json({ error: "Invalid credentials" });
+    if (!valid) return res.status(400).json({error: "Invalid credentials"});
 
     const tokens = generateTokens(user.id);
     res.cookie("refreshToken", tokens.refreshToken, {
@@ -48,12 +72,12 @@ router.post("/login", async (req, res) => {
         sameSite: "none",
         maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    res.json({ accessToken: tokens.accessToken, user: { id: user.id, email: user.email } });
+    res.json({accessToken: tokens.accessToken, user: {id: user.id, email: user.email}});
 });
 
 router.post("/refresh", (req, res) => {
     const refresh = req.cookies.refreshToken;
-    if (!refresh) return res.status(401).json({ error: "Missing refresh token" });
+    if (!refresh) return res.status(401).json({error: "Missing refresh token"});
 
     try {
         const payload = jwt.verify(refresh, ENV.REFRESH_SECRET) as { userId: number };
@@ -65,15 +89,15 @@ router.post("/refresh", (req, res) => {
             sameSite: "none",
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
-        res.json({ accessToken: tokens.accessToken });
+        res.json({accessToken: tokens.accessToken});
     } catch {
-        res.status(401).json({ error: "Invalid refresh token" });
+        res.status(401).json({error: "Invalid refresh token"});
     }
 });
 
 router.post("/logout", (_, res) => {
-    res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "none" });
-    res.json({ success: true });
+    res.clearCookie("refreshToken", {httpOnly: true, secure: true, sameSite: "none"});
+    res.json({success: true});
 });
 
 export default router;

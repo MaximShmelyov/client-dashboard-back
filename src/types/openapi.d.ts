@@ -91,7 +91,7 @@ export interface paths {
             'application/json': components['schemas']['ActivationCodeSentResponse'];
           };
         };
-        /** @description Incorrect email */
+        /** @description Validation error */
         400: {
           headers: {
             [name: string]: unknown;
@@ -123,6 +123,7 @@ export interface paths {
         query: {
           /** @description Activation code */
           code: string;
+          email: string;
         };
         header?: never;
         path?: never;
@@ -141,6 +142,15 @@ export interface paths {
         };
         /** @description Activation error */
         400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Invalid code */
+        401: {
           headers: {
             [name: string]: unknown;
           };
@@ -315,6 +325,51 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/profile/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Request profile data */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Profile data */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['AccountInfoResponse'];
+          };
+        };
+        /** @description Error */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -344,6 +399,9 @@ export interface components {
       user?: components['schemas']['User'];
       /** @description Short-lived JWT access token */
       accessToken?: string;
+    };
+    AccountInfoResponse: {
+      user?: components['schemas']['User'];
     };
     ActivationCodeSentResponse: {
       /** @example Activation code sent */

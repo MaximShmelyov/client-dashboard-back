@@ -1,6 +1,7 @@
 import path from 'path';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import 'express-async-errors';
 import express from 'express';
 import * as OpenApiValidator from 'express-openapi-validator';
 import YAML from 'yamljs';
@@ -35,7 +36,7 @@ app.use(
 );
 
 app.use('/auth', authRoutes);
-app.use('/users', userRoutes);
+app.use('/profile', userRoutes);
 
 app.use(
   (

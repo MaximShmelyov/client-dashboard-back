@@ -15,6 +15,8 @@ type ErrorResponse = components['schemas']['ErrorResponse'];
 type ActivationCodeSentResponse =
   components['schemas']['ActivationCodeSentResponse'];
 type AccessTokenResponse = components['schemas']['AccessTokenResponse'];
+type AccountActivatedResponse =
+  components['schemas']['AccountActivatedResponse'];
 
 const router = Router();
 const authService = new AuthService();
@@ -41,6 +43,34 @@ router.post('/register', async (req, res) => {
   };
 
   res.status(201).json(registeredResponse);
+});
+
+router.get('/activate', async (req, res) => {
+  const code = req.query.code as string;
+  const email = req.query.email as string;
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    const errorResponse: ErrorResponse = {
+      statusCode: 400,
+      error: 'Error',
+      message: 'No valid user found',
+    };
+    return res.status(400).json(errorResponse);
+  }
+
+  if (!(await authService.activateAccount(user.id, code))) {
+    const errorResponse: ErrorResponse = {
+      statusCode: 401,
+      error: 'Error',
+      message: 'Invalid code provided',
+    };
+    return res.status(401).json(errorResponse);
+  }
+
+  const accountActivatedResponse: AccountActivatedResponse = {
+    message: 'Account activated',
+  };
+  res.status(200).json(accountActivatedResponse);
 });
 
 router.post('/login', async (req, res) => {
@@ -76,7 +106,11 @@ router.post('/login', async (req, res) => {
   });
   const authResponse: AuthResponse = {
     accessToken: tokens.accessToken,
-    user: { email: user.email, name: user.name || undefined },
+    user: {
+      email: user.email,
+      name: user.name || undefined,
+      createdAt: user.createdAt.toISOString(),
+    },
   };
   res.status(200).json(authResponse);
 });

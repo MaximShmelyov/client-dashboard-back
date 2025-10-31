@@ -13,6 +13,8 @@ servers:
 tags:
   - name: Auth
     description: Authentication endpoints
+  - name: Profile
+    description: Profile endpoints
 
 paths:
   /auth/register:
@@ -87,6 +89,13 @@ paths:
             type: string
             example: 086a0
           description: Activation code
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+            example: user@email.com
       responses:
         '200':
           description: Account activated
@@ -96,6 +105,12 @@ paths:
                 $ref: '#/components/schemas/AccountActivatedResponse'
         '400':
           description: Activation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid code
           content:
             application/json:
               schema:
@@ -176,7 +191,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+  /profile/me:
+    get:
+      tags: [Profile]
+      summary: Request profile data
+      responses:
+        '200':
+          description: Profile data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountInfoResponse'
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     RegisterRequest:
@@ -221,6 +252,12 @@ components:
         accessToken:
           type: string
           description: Short-lived JWT access token
+
+    AccountInfoResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
 
     ActivationCodeSentResponse:
       type: object

@@ -32,7 +32,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/RegisteredResponse'
         '400':
           description: Validation error
           content:
@@ -41,6 +41,61 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/requestcode:
+    get:
+      tags: [Auth]
+      summary: Request account activation code
+      security: []
+      parameters:
+        - in: path
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+            example: a@a.com
+          description: User email to get a code
+      responses:
+        '200':
+          description: Successfully sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivationCodeSentResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/activate:
+    get:
+      tags: [Auth]
+      summary: Activate account with provided code
+      security: []
+      parameters:
+        - in: query
+          name: code
+          required: true
+          schema:
+            type: string
+            example: 086a0
+          description: Activation code
+      responses:
+        '200':
+          description: Account activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountActivatedResponse'
+        '400':
+          description: Activation error
           content:
             application/json:
               schema:
@@ -78,6 +133,12 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Non-activated account log-in attempt
           content:
             application/json:
               schema:
@@ -145,6 +206,13 @@ components:
           type: string
           example: MySecurePass123
 
+    RegisteredResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: User registered
+
     AuthResponse:
       type: object
       properties:
@@ -153,6 +221,20 @@ components:
         accessToken:
           type: string
           description: Short-lived JWT access token
+
+    ActivationCodeSentResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Activation code sent
+
+    AccountActivatedResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Account activated
 
     AccessTokenResponse:
       type: object

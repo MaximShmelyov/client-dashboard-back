@@ -52,7 +52,7 @@ paths:
       summary: Request account activation code
       security: []
       parameters:
-        - in: path
+        - in: query
           name: email
           required: true
           schema:

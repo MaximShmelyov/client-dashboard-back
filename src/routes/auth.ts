@@ -13,6 +13,8 @@ type AuthResponse = components['schemas']['AuthResponse'];
 type RegisterConflictResponse =
   paths['/auth/register']['post']['responses']['409']['content']['application/json'];
 type ErrorResponse = components['schemas']['ErrorResponse'];
+type ActivationCodeSentResponse =
+  components['schemas']['ActivationCodeSentResponse'];
 
 const router = Router();
 const authService = new AuthService();
@@ -62,8 +64,8 @@ router.post('/login', async (req, res) => {
   });
 });
 
-router.get('/requestcode/:email', async (req, res) => {
-  const email = req.params.email;
+router.get('/requestcode', async (req, res) => {
+  const email = req.query.email as string;
 
   const user = await prisma.user.findUnique({
     where: { email, activated: false, blocked: false },
@@ -76,6 +78,14 @@ router.get('/requestcode/:email', async (req, res) => {
     };
     return res.status(400).json(errorResponse);
   }
+
+  const code = await authService.requestCode(user.id);
+  // @TODO: request code sending
+
+  const activationCodeSentResponse: ActivationCodeSentResponse = {
+    message: 'Activation code sent',
+  };
+  res.status(200).json(activationCodeSentResponse);
 });
 
 router.post('/refresh', (req, res) => {

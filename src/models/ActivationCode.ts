@@ -11,7 +11,7 @@ const activationCodeSchema = new Schema<ActivationCodeDocument>({
   userId: { type: Number, required: true, index: true },
   code: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
-  expiresAt: { type: Date, required: true, index: { expires: 0 } },
+  expiresAt: { type: Date, required: true },
 });
 
 activationCodeSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });

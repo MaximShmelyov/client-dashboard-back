@@ -7,14 +7,20 @@ const activationRepo = new ActivationRepository();
 export class AuthService {
   async register(email: string, password: string, name?: string) {
     const user = await prisma.user.create({ data: { email, password, name } });
+    console.log(`Registered user ${user.email}`);
 
+    return { user };
+  }
+
+  async requestCode(userId: number) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error(`User with id: ${userId} not found`);
     const code = await activationRepo.create(
       user.id,
       ENV.ACTIVATION_CODE_TTL_MINUTES,
     );
-    console.log(`Registered user ${user.email}, code: ${code}`);
-
-    return { user };
+    console.log(`Generated code: ${code} for user: ${userId}`);
+    return code;
   }
 
   async activateAccount(userId: number, code: string): Promise<boolean> {

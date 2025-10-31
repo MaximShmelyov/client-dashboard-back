@@ -1,8 +1,11 @@
+import jwt from 'jsonwebtoken';
 import { ENV } from '../env';
 import { prisma } from '../prisma';
 import { ActivationRepository } from '../repositories/activation.repository';
+import { RefreshRepository } from '../repositories/refresh.repository';
 
 const activationRepo = new ActivationRepository();
+const refreshRepo = new RefreshRepository();
 
 export class AuthService {
   async register(email: string, password: string, name?: string) {
@@ -35,5 +38,48 @@ export class AuthService {
     await activationRepo.consume(userId, code);
 
     return true;
+  }
+
+  /**
+   * Add new refresh token to db and obsolete previous tokens for specified user.
+   * @param userId
+   * @param token
+   * @param ttlMinutes
+   */
+  async updateRefreshToken(
+    userId: number,
+    token: string,
+    ttlMinutes: number,
+  ): Promise<void> {
+    await refreshRepo.update(userId, token, ttlMinutes);
+  }
+
+  /**
+   * Verify refresh token is valid and exists in db.
+   * @param token - refresh token
+   */
+  async verifyRefreshToken(token: string): Promise<{ userId: number } | null> {
+    const payload = jwt.verify(token, ENV.REFRESH_SECRET) as {
+      userId: number;
+    };
+    if (!(await refreshRepo.verify(payload.userId, token))) {
+      return null;
+    }
+
+    return payload;
+  }
+
+  /**
+   * Logout by removing refresh token(-s) from db.
+   * If no refresh token is provided, all tokens for user will be deleted.
+   * @param userId
+   * @param token
+   */
+  async removeRefreshToken(userId: number, token?: string): Promise<void> {
+    if (!token) {
+      await refreshRepo.deleteByUserId(userId);
+    } else {
+      await refreshRepo.delete(userId, token);
+    }
   }
 }

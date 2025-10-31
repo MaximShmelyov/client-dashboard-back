@@ -5,9 +5,7 @@ export class ActivationRepository {
   async create(userId: number, ttlMinutes: number): Promise<string> {
     await this.clearCodes(userId);
     const code = crypto.randomInt(1000, 9999).toString();
-    const expiresAt = new Date(
-      Date.now() + ttlMinutes * 60 * 1000 /* @TODO: use ENV */,
-    );
+    const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
     await ActivationCode.create({ userId, code, expiresAt });
     return code;
   }

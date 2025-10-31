@@ -1,8 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { ENV } from '../env';
+import { prisma } from '../prisma';
+import { components } from '../types/openapi';
 
-export function authMiddleware(
+type ErrorResponse = components['schemas']['ErrorResponse'];
+
+export async function authMiddleware(
   req: Request,
   res: Response,
   next: NextFunction,
@@ -13,7 +17,22 @@ export function authMiddleware(
   try {
     const token = authHeader.split(' ')[1];
     const payload = jwt.verify(token, ENV.ACCESS_SECRET) as { userId: number };
-    (req as any).userId = payload.userId;
+    const user = await prisma.user.findUnique({
+      where: {
+        id: payload.userId,
+      },
+    });
+    if (!user) throw new Error('User not found');
+    if (user.blocked || !user.activated) {
+      const forbiddenErrorResponse: ErrorResponse = {
+        statusCode: 403,
+        error: 'Forbidden',
+        message: 'Account blocked or not active',
+      };
+      return res.status(403).json(forbiddenErrorResponse);
+    }
+
+    (req as any).user = user;
     next();
   } catch {
     res.status(401).json({ error: 'Invalid or expired token' });

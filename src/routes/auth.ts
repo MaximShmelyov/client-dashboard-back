@@ -1,6 +1,5 @@
 import bcrypt from 'bcrypt';
 import { Router } from 'express';
-import jwt from 'jsonwebtoken';
 import { ENV } from '../env';
 import { prisma } from '../prisma';
 import { AuthService } from '../services/auth.service';
@@ -15,6 +14,7 @@ type RegisterConflictResponse =
 type ErrorResponse = components['schemas']['ErrorResponse'];
 type ActivationCodeSentResponse =
   components['schemas']['ActivationCodeSentResponse'];
+type AccessTokenResponse = components['schemas']['AccessTokenResponse'];
 
 const router = Router();
 const authService = new AuthService();
@@ -74,10 +74,11 @@ router.post('/login', async (req, res) => {
     sameSite: 'none',
     maxAge: ENV.COOKIES_MAX_AGE,
   });
-  res.json({
+  const authResponse: AuthResponse = {
     accessToken: tokens.accessToken,
-    user: { id: user.id, email: user.email },
-  });
+    user: { email: user.email, name: user.name || undefined },
+  };
+  res.status(200).json(authResponse);
 });
 
 router.get('/requestcode', async (req, res) => {
@@ -104,15 +105,26 @@ router.get('/requestcode', async (req, res) => {
   res.status(200).json(activationCodeSentResponse);
 });
 
-router.post('/refresh', (req, res) => {
-  const refresh = req.cookies.refreshToken;
-  if (!refresh) return res.status(401).json({ error: 'Missing refresh token' });
+router.post('/refresh', async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) {
+    const errorResponse: ErrorResponse = {
+      statusCode: 401,
+      error: 'Unauthorized',
+      message: 'Missing refresh token',
+    };
+    return res.status(401).json(errorResponse);
+  }
 
   try {
-    const payload = jwt.verify(refresh, ENV.REFRESH_SECRET) as {
-      userId: number;
-    };
+    const payload = await authService.verifyRefreshToken(refreshToken);
+    if (!payload) throw new Error('payload is null');
     const tokens = TokenService.generateTokens(payload.userId);
+    await authService.updateRefreshToken(
+      payload.userId,
+      tokens.refreshToken,
+      ENV.REFRESH_TOKEN_EXPIRES_IN_MINUTES,
+    );
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
@@ -120,19 +132,38 @@ router.post('/refresh', (req, res) => {
       sameSite: 'none',
       maxAge: ENV.COOKIES_MAX_AGE,
     });
-    res.json({ accessToken: tokens.accessToken });
+    const accessTokenResponse: AccessTokenResponse = {
+      accessToken: tokens.accessToken,
+    };
+    res.status(200).json(accessTokenResponse);
   } catch {
-    res.status(401).json({ error: 'Invalid refresh token' });
+    const errorResponse: ErrorResponse = {
+      statusCode: 401,
+      error: 'Unauthorized',
+      message: 'Invalid or expired refresh token',
+    };
+    res.status(401).json(errorResponse);
   }
 });
 
-router.post('/logout', (_, res) => {
-  res.clearCookie('refreshToken', {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'none',
-  });
-  res.json({ success: true });
+router.post('/logout', async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) throw new Error('refresh token is missing');
+    const payload = await authService.verifyRefreshToken(refreshToken);
+    if (!payload) throw new Error('payload is null');
+
+    await authService.removeRefreshToken(payload.userId, refreshToken);
+  } catch (e) {
+    console.error(e);
+  } finally {
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+    });
+  }
+  res.sendStatus(204);
 });
 
 export default router;

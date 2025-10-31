@@ -46,10 +46,26 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+
+  const invalidCredentialsError: ErrorResponse = {
+    statusCode: 401,
+    error: 'Unauthorized',
+    message: 'Invalid credentials',
+  };
+
+  if (!user) return res.status(401).json(invalidCredentialsError);
+
+  if (user.blocked || !user.activated) {
+    const notAllowedError: ErrorResponse = {
+      statusCode: 403,
+      error: 'Forbidden',
+      message: 'Account blocked or not active',
+    };
+    return res.status(403).json(notAllowedError);
+  }
 
   const valid = await bcrypt.compare(password, user.password);
-  if (!valid) return res.status(400).json({ error: 'Invalid credentials' });
+  if (!valid) return res.status(401).json(invalidCredentialsError);
 
   const tokens = TokenService.generateTokens(user.id);
   res.cookie('refreshToken', tokens.refreshToken, {

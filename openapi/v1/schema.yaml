@@ -208,6 +208,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     RegisterRequest:
@@ -288,9 +294,15 @@ components:
           format: email
         name:
           type: string
+        verifiedClient:
+          type: boolean
         createdAt:
           type: string
           format: date-time
+      required:
+        - email
+        - verifiedClient
+        - createdAt
 
     ErrorResponse:
       type: object

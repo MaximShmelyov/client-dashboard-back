@@ -12,7 +12,7 @@ router.get('/me', authMiddleware, async (req, res) => {
   const id = (req as any).user.id as number;
   const user = await prisma.user.findUnique({
     where: { id },
-    select: { email: true, name: true, createdAt: true },
+    select: { email: true, name: true, createdAt: true, verifiedClient: true },
   });
   if (!user) {
     const errorResponse: ErrorResponse = {
@@ -27,6 +27,7 @@ router.get('/me', authMiddleware, async (req, res) => {
       email: user.email,
       name: user.name || undefined,
       createdAt: user.createdAt.toISOString(),
+      verifiedClient: user.verifiedClient,
     },
   };
   res.status(200).json(accountInfoResponse);

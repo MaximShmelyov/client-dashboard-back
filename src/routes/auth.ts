@@ -114,6 +114,7 @@ router.post('/login', async (req, res) => {
       email: user.email,
       name: user.name || undefined,
       createdAt: user.createdAt.toISOString(),
+      verifiedClient: user.verifiedClient,
     },
   };
   res.status(200).json(authResponse);

@@ -35,6 +35,11 @@ export async function authMiddleware(
     (req as any).user = user;
     next();
   } catch {
-    res.status(401).json({ error: 'Invalid or expired token' });
+    const unauthorizedErrorResponse: ErrorResponse = {
+      statusCode: 401,
+      error: 'Unauthorized',
+      message: 'Invalid or expired token',
+    };
+    res.status(401).json(unauthorizedErrorResponse);
   }
 }

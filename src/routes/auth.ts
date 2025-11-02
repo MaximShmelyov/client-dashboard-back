@@ -27,12 +27,16 @@ router.post('/register', async (req, res) => {
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    const conflictResponse: RegisterConflictResponse = {
-      statusCode: 409,
-      error: 'Conflict',
-      message: 'User already exists',
-    };
-    return res.status(409).json(conflictResponse);
+    if (existing.activated) {
+      const conflictResponse: RegisterConflictResponse = {
+        statusCode: 409,
+        error: 'Conflict',
+        message: 'User already exists',
+      };
+      return res.status(409).json(conflictResponse);
+    } else {
+      await prisma.user.delete({ where: { id: existing.id } });
+    }
   }
 
   const hashed = await bcrypt.hash(password, ENV.PASSWORD_ROUNDS);

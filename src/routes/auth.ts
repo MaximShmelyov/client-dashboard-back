@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { ENV } from '../env';
 import { prisma } from '../prisma';
 import { AuthService } from '../services/auth.service';
+import { ResetAuthService } from '../services/reset.auth.service';
 import { TokenService } from '../services/token.service';
 import { components, paths } from '../types/openapi';
 
@@ -20,6 +21,7 @@ type AccountActivatedResponse =
 
 const router = Router();
 const authService = new AuthService();
+const resetAuthService = new ResetAuthService();
 
 router.post('/register', async (req, res) => {
   const body: RegisterRequest = req.body;
@@ -183,6 +185,52 @@ router.post('/refresh', async (req, res) => {
     };
     res.status(401).json(errorResponse);
   }
+});
+
+router.get('/resetpassword', async (req, res) => {
+  const email = req.query.email as string;
+  const user = await prisma.user.findUnique({
+    where: { email, activated: true, blocked: false },
+  });
+  if (!user) {
+    const errorResponse: ErrorResponse = {
+      statusCode: 400,
+      error: 'Bad request',
+      message: 'No valid user found',
+    };
+    return res.status(400).json(errorResponse);
+  }
+
+  const resetCode = resetAuthService.requestResetCode(user.id);
+  // @TODO: send reset code to user
+  console.log(`Reset code: ${resetCode} for user ${user.id} generated.`);
+
+  res.sendStatus(204);
+});
+
+router.get('/verifyresetcode', async (req, res) => {
+  const { code, email } = req.query;
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+  if (!user) {
+    const errorResponse: ErrorResponse = {
+      statusCode: 400,
+      error: 'Bad request',
+      message: 'No valid user found',
+    };
+    return res.status(400).json(errorResponse);
+  }
+  if (!(await resetAuthService.resetPasswordByCode(user.id, code))) {
+    const wrongCodeError: ErrorResponse = {
+      statusCode: 401,
+      error: 'Unauthorized',
+      message: 'Invalid code',
+    };
+    return res.status(401).json(wrongCodeError);
+  }
+
+  res.sendStatus(204);
 });
 
 router.post('/logout', async (req, res) => {

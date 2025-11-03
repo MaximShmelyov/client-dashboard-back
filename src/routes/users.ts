@@ -1,27 +1,19 @@
+import { User } from '@prisma/client';
+import bcrypt from 'bcrypt';
 import { Router } from 'express';
+import { ENV } from '../env';
 import { authMiddleware } from '../middleware/auth';
 import { prisma } from '../prisma';
 import { components } from '../types/openapi';
 
 type AccountInfoResponse = components['schemas']['AccountInfoResponse'];
 type ErrorResponse = components['schemas']['ErrorResponse'];
+type ChangePasswordRequest = components['schemas']['ChangePasswordRequest'];
 
 const router = Router();
 
 router.get('/me', authMiddleware, async (req, res) => {
-  const id = (req as any).user.id as number;
-  const user = await prisma.user.findUnique({
-    where: { id },
-    select: { email: true, name: true, createdAt: true, verifiedClient: true },
-  });
-  if (!user) {
-    const errorResponse: ErrorResponse = {
-      statusCode: 400,
-      error: 'Error',
-      message: 'No user found',
-    };
-    return res.status(400).json(errorResponse);
-  }
+  const user: User = (req as any).user as User;
   const accountInfoResponse: AccountInfoResponse = {
     user: {
       email: user.email,
@@ -31,6 +23,38 @@ router.get('/me', authMiddleware, async (req, res) => {
     },
   };
   res.status(200).json(accountInfoResponse);
+});
+
+router.post('/changepassword', authMiddleware, async (req, res) => {
+  const user: User = (req as any).user as User;
+  const changePasswordRequest: ChangePasswordRequest = req.body;
+
+  const validOldPassword = await bcrypt.compare(
+    changePasswordRequest.oldPassword,
+    user.password,
+  );
+  if (!validOldPassword) {
+    const invalidPasswordError: ErrorResponse = {
+      statusCode: 403,
+      error: 'Forbidden',
+      message: "Password doesn't match",
+    };
+    return res.status(403).json(invalidPasswordError);
+  }
+
+  const newHashed = await bcrypt.hash(
+    changePasswordRequest.newPassword,
+    ENV.PASSWORD_ROUNDS,
+  );
+  // @TODO: send notification (by email) to user
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password: newHashed,
+    },
+  });
+
+  res.sendStatus(204);
 });
 
 export default router;

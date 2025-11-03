@@ -12,4 +12,5 @@ export const ENV = {
   ),
   COOKIES_MAX_AGE: Number(process.env.COOKIES_MAX_AGE!),
   ACTIVATION_CODE_TTL_MINUTES: Number(process.env.ACTIVATION_CODE_TTL_MINUTES!),
+  RESET_CODE_TTL_MINUTES: Number(process.env.RESET_CODE_TTL_MINUTES!),
 };

@@ -8,5 +8,6 @@ declare namespace NodeJS {
     REFRESH_TOKEN_EXPIRES_IN_MINUTES: string;
     COOKIES_MAX_AGE: string;
     ACTIVATION_CODE_TTL_MINUTES: string;
+    RESET_CODE_TTL_MINUTES: string;
   }
 }

@@ -576,12 +576,12 @@ export interface components {
       message?: string;
     };
     AuthResponse: {
-      user?: components['schemas']['User'];
+      user: components['schemas']['User'];
       /** @description Short-lived JWT access token */
-      accessToken?: string;
+      accessToken: string;
     };
     AccountInfoResponse: {
-      user?: components['schemas']['User'];
+      user: components['schemas']['User'];
     };
     ActivationCodeSentResponse: {
       /** @example Activation code sent */
@@ -593,7 +593,7 @@ export interface components {
     };
     AccessTokenResponse: {
       /** @description New JWT access token */
-      accessToken?: string;
+      accessToken: string;
     };
     User: {
       /** Format: email */

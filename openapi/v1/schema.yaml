@@ -352,6 +352,7 @@ components:
 
     AuthResponse:
       type: object
+      required: [user, accessToken]
       properties:
         user:
           $ref: '#/components/schemas/User'
@@ -361,6 +362,7 @@ components:
 
     AccountInfoResponse:
       type: object
+      required: [user]
       properties:
         user:
           $ref: '#/components/schemas/User'
@@ -381,6 +383,7 @@ components:
 
     AccessTokenResponse:
       type: object
+      required: [accessToken]
       properties:
         accessToken:
           type: string

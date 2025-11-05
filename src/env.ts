@@ -15,4 +15,7 @@ export const ENV = {
   ACTIVATION_CODE_TTL_MINUTES: Number(process.env.ACTIVATION_CODE_TTL_MINUTES!),
   RESET_CODE_TTL_MINUTES: Number(process.env.RESET_CODE_TTL_MINUTES!),
   BITRIX_URL: process.env.BITRIX_WEBHOOK_URL!,
+  BITRIX_ITEMS_PER_PAGE: process.env.BITRIX_ITEMS_PER_PAGE
+    ? Number(process.env.BITRIX_ITEMS_PER_PAGE)
+    : 50,
 };

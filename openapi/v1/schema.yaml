@@ -479,7 +479,7 @@ components:
 
     OrderSort:
       type: string
-      enum: [dateAsc, dateDesc, statusAsc, statusDesc]
+      enum: [dateDesc, dateAsc, statusDesc, statusAsc]
 
     Order:
       type: object

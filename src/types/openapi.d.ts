@@ -669,7 +669,7 @@ export interface components {
     /** @enum {string} */
     OrderStatus: 'new' | 'processing' | 'shipped' | 'delivered' | 'canceled';
     /** @enum {string} */
-    OrderSort: 'dateAsc' | 'dateDesc' | 'statusAsc' | 'statusDesc';
+    OrderSort: 'dateDesc' | 'dateAsc' | 'statusDesc' | 'statusAsc';
     Order: {
       id: number;
       code: string;

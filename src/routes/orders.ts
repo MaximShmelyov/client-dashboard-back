@@ -37,7 +37,7 @@ router.get('/', authMiddleware, verifiedMiddleware, async (req, res) => {
       case 'statusAsc':
         return { STAGE_ID: 'ASC' };
       case 'statusDesc':
-        return { STAGE_ID: 'ASC' };
+        return { STAGE_ID: 'DESC' };
       default:
         throw new Error(`unexpected sort: ${ordersQuery.sort}`);
     }

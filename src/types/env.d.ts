@@ -1,6 +1,7 @@
 declare namespace NodeJS {
   interface ProcessEnv {
     PORT: string;
+    ENVIRONMENT: string;
     PASSWORD_ROUNDS: string;
     JWT_ACCESS_SECRET: string;
     JWT_REFRESH_SECRET: string;
@@ -9,5 +10,6 @@ declare namespace NodeJS {
     COOKIES_MAX_AGE: string;
     ACTIVATION_CODE_TTL_MINUTES: string;
     RESET_CODE_TTL_MINUTES: string;
+    BITRIX_URL: string;
   }
 }

@@ -8,6 +8,7 @@ import YAML from 'yamljs';
 import { ENV } from './env';
 import { connectMongo } from './mongo';
 import authRoutes from './routes/auth';
+import orderRoutes from './routes/orders';
 import userRoutes from './routes/users';
 
 const app = express();
@@ -37,6 +38,7 @@ app.use(
 
 app.use('/auth', authRoutes);
 app.use('/profile', userRoutes);
+app.use('/orders', orderRoutes);
 
 app.use(
   (

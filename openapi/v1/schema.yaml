@@ -15,6 +15,8 @@ tags:
     description: Authentication endpoints
   - name: Profile
     description: Profile endpoints
+  - name: Orders
+    description: Orders endpoints
 
 paths:
   /auth/register:
@@ -302,7 +304,71 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /orders:
+    get:
+      tags: [Orders]
+      summary: Request orders
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/StatusParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrdersResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden. Blocked, inactive or unverified user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
+  parameters:
+    PageParam:
+      in: query
+      name: page
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+        example: 1
+      description: Page
+    PageSizeParam:
+      in: query
+      name: pageSize
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        example: 10
+      description: Page size
+    StatusParam:
+      in: query
+      name: status
+      required: false
+      schema:
+        $ref: '#/components/schemas/OrderStatus'
+      description: Order status filter
+    SortParam:
+      in: query
+      name: sort
+      required: false
+      schema:
+        $ref: '#/components/schemas/OrderSort'
+      description: Sort order
   schemas:
     RegisterRequest:
       type: object
@@ -406,6 +472,41 @@ components:
         - email
         - verifiedClient
         - createdAt
+
+    OrderStatus:
+      type: string
+      enum: [pending, processing, shipped, delivered, canceled]
+
+    OrderSort:
+      type: string
+      enum: [dateAsc, dateDesc, priceAsc, priceDesc]
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        date:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        title:
+          type: string
+      required: [id, date, status, title, code]
+
+    OrdersResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        totalPages:
+          type: integer
+      required: [orders, totalPages]
 
     ErrorResponse:
       type: object

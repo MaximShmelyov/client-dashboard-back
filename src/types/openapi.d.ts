@@ -544,6 +544,69 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/orders': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Request orders */
+    get: {
+      parameters: {
+        query: {
+          /** @description Page */
+          page: components['parameters']['PageParam'];
+          /** @description Page size */
+          pageSize: components['parameters']['PageSizeParam'];
+          /** @description Order status filter */
+          status?: components['parameters']['StatusParam'];
+          /** @description Sort order */
+          sort?: components['parameters']['SortParam'];
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Orders */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['OrdersResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden. Blocked, inactive or unverified user */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -603,6 +666,27 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    /** @enum {string} */
+    OrderStatus:
+      | 'pending'
+      | 'processing'
+      | 'shipped'
+      | 'delivered'
+      | 'canceled';
+    /** @enum {string} */
+    OrderSort: 'dateAsc' | 'dateDesc' | 'priceAsc' | 'priceDesc';
+    Order: {
+      id: number;
+      code: string;
+      /** Format: date-time */
+      date: string;
+      status: components['schemas']['OrderStatus'];
+      title: string;
+    };
+    OrdersResponse: {
+      orders: components['schemas']['Order'][];
+      totalPages: number;
+    };
     ErrorResponse: {
       /** @example 401 */
       statusCode: number;
@@ -617,7 +701,16 @@ export interface components {
     };
   };
   responses: never;
-  parameters: never;
+  parameters: {
+    /** @description Page */
+    PageParam: number;
+    /** @description Page size */
+    PageSizeParam: number;
+    /** @description Order status filter */
+    StatusParam: components['schemas']['OrderStatus'];
+    /** @description Sort order */
+    SortParam: components['schemas']['OrderSort'];
+  };
   requestBodies: never;
   headers: never;
   pathItems: never;

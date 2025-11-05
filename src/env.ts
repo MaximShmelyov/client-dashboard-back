@@ -3,6 +3,7 @@ dotenv.config();
 
 export const ENV = {
   PORT: process.env.PORT || 4000,
+  ENVIRONMENT: process.env.ENVIRONMENT,
   PASSWORD_ROUNDS: Number(process.env.PASSWORD_ROUNDS!),
   ACCESS_SECRET: process.env.JWT_ACCESS_SECRET!,
   REFRESH_SECRET: process.env.JWT_REFRESH_SECRET!,
@@ -13,4 +14,5 @@ export const ENV = {
   COOKIES_MAX_AGE: Number(process.env.COOKIES_MAX_AGE!),
   ACTIVATION_CODE_TTL_MINUTES: Number(process.env.ACTIVATION_CODE_TTL_MINUTES!),
   RESET_CODE_TTL_MINUTES: Number(process.env.RESET_CODE_TTL_MINUTES!),
+  BITRIX_URL: process.env.BITRIX_WEBHOOK_URL!,
 };

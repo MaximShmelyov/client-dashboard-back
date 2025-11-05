@@ -41,17 +41,17 @@ export class AuthService {
   }
 
   /**
-   * Add new refresh token to db and obsolete previous tokens for specified user.
+   * Add new refresh token to db for specified user.
    * @param userId
    * @param token
    * @param ttlMinutes
    */
-  async updateRefreshToken(
+  async saveRefreshToken(
     userId: number,
     token: string,
     ttlMinutes: number,
   ): Promise<void> {
-    await refreshRepo.update(userId, token, ttlMinutes);
+    await refreshRepo.save(userId, token, ttlMinutes);
   }
 
   /**

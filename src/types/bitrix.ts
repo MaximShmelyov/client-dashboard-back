@@ -2,7 +2,7 @@
  * Common types for Bitrix24 REST API
  */
 export interface BitrixListResponse<T> {
-  items: T[];
+  result: T[];
   total?: number;
   next?: number | null;
 }

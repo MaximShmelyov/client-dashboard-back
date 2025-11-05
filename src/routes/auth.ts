@@ -18,6 +18,8 @@ type ActivationCodeSentResponse =
 type AccessTokenResponse = components['schemas']['AccessTokenResponse'];
 type AccountActivatedResponse =
   components['schemas']['AccountActivatedResponse'];
+type VerifyResetQuery =
+  paths['/auth/verifyresetcode']['get']['parameters']['query'];
 
 const router = Router();
 const authService = new AuthService();
@@ -103,11 +105,17 @@ router.post('/login', async (req, res) => {
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) return res.status(401).json(invalidCredentialsError);
 
+  const isProd = ENV.ENVIRONMENT === 'prod';
   const tokens = TokenService.generateTokens(user.id);
+  await authService.saveRefreshToken(
+    user.id,
+    tokens.refreshToken,
+    ENV.REFRESH_TOKEN_EXPIRES_IN_MINUTES,
+  );
   res.cookie('refreshToken', tokens.refreshToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: ENV.COOKIES_MAX_AGE,
   });
   const authResponse: AuthResponse = {
@@ -160,8 +168,9 @@ router.post('/refresh', async (req, res) => {
   try {
     const payload = await authService.verifyRefreshToken(refreshToken);
     if (!payload) throw new Error('payload is null');
+    await authService.removeRefreshToken(payload.userId, refreshToken);
     const tokens = TokenService.generateTokens(payload.userId);
-    await authService.updateRefreshToken(
+    await authService.saveRefreshToken(
       payload.userId,
       tokens.refreshToken,
       ENV.REFRESH_TOKEN_EXPIRES_IN_MINUTES,
@@ -209,7 +218,7 @@ router.get('/resetpassword', async (req, res) => {
 });
 
 router.get('/verifyresetcode', async (req, res) => {
-  const { code, email } = req.query;
+  const { code, email } = req.query as VerifyResetQuery;
   const user = await prisma.user.findUnique({
     where: { email },
   });

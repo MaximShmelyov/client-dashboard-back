@@ -2,17 +2,16 @@ import { RefreshToken } from '../models/RefreshToken';
 
 export class RefreshRepository {
   /**
-   * Add newToken to db and obsolete previous user's token(-s)
+   * Add newToken to db
    * @param userId
    * @param newToken - refresh token
    * @param ttlMinutes
    */
-  async update(
+  async save(
     userId: number,
     newToken: string,
     ttlMinutes: number,
   ): Promise<void> {
-    await this.deleteByUserId(userId);
     const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
     await RefreshToken.create({ userId, token: newToken, expiresAt });
   }

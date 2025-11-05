@@ -1,9 +1,15 @@
 import { BitrixListResponse, Deal } from '../types/bitrix';
 import { BitrixService } from './bitrix24.service';
 
-export async function getDealsByContact(contactId: number, start = 0) {
+export async function getDealsByContact(
+  contactId: number,
+  filter: Record<string, string> = {},
+  order: Record<string, string> = { DATE_CREATE: 'ASC' },
+  start = 0,
+) {
   return await BitrixService.call<BitrixListResponse<Deal>>('crm.deal.list', {
-    filter: { CONTACT_ID: contactId },
+    filter: { ...filter /*, CONTACT_ID: contactId*/ },
+    order,
     select: ['ID', 'TITLE', 'STAGE_ID', 'UF_*', '*'],
     start,
   });

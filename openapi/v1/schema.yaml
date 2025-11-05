@@ -475,11 +475,11 @@ components:
 
     OrderStatus:
       type: string
-      enum: [pending, processing, shipped, delivered, canceled]
+      enum: [new, processing, shipped, delivered, canceled]
 
     OrderSort:
       type: string
-      enum: [dateAsc, dateDesc, priceAsc, priceDesc]
+      enum: [dateAsc, dateDesc, statusAsc, statusDesc]
 
     Order:
       type: object
@@ -495,7 +495,7 @@ components:
           $ref: '#/components/schemas/OrderStatus'
         title:
           type: string
-      required: [id, date, status, title, code]
+      required: [id, title, code]
 
     OrdersResponse:
       type: object

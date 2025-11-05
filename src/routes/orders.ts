@@ -5,6 +5,7 @@ import { verifiedMiddleware } from '../middleware/verified';
 import { getContacts } from '../services/contacts.service';
 import { getDealsByContact } from '../services/deals.service';
 import { components, paths } from '../types/openapi';
+import { toBitrixStatus, toOrderStatus } from '../utils/bitrixStatusConverter';
 
 // type PageParam = components['parameters']['PageParam'];
 // type PageSizeParam = components['parameters']['PageSizeParam'];
@@ -26,8 +27,31 @@ router.get('/', authMiddleware, verifiedMiddleware, async (req, res) => {
   const bitrixStart = bitrixPage * ENV.BITRIX_ITEMS_PER_PAGE;
   const bitrixOffset = globalStart % ENV.BITRIX_ITEMS_PER_PAGE;
   const contacts = await getContacts();
+
+  const sort = ((): Record<string, string> => {
+    switch (ordersQuery.sort) {
+      case 'dateAsc':
+        return { DATE_CREATE: 'ASC' };
+      case 'dateDesc':
+        return { DATE_CREATE: 'DESC' };
+      case 'statusAsc':
+        return { STAGE_ID: 'ASC' };
+      case 'statusDesc':
+        return { STAGE_ID: 'ASC' };
+      default:
+        throw new Error(`unexpected sort: ${ordersQuery.sort}`);
+    }
+  })();
+
+  const status = ((): string | undefined => {
+    if (!ordersQuery.status) return;
+    return toBitrixStatus(ordersQuery.status);
+  })();
+
   const deals = await getDealsByContact(
     Number.parseInt(contacts.result[0].ID),
+    status ? { STAGE_ID: status } : {},
+    sort,
     bitrixStart,
   );
 
@@ -41,8 +65,8 @@ router.get('/', authMiddleware, verifiedMiddleware, async (req, res) => {
       return {
         id: Number(deal.ID),
         code: deal.ID,
-        date: convertDateToISO(deal.DATE_CREATE || new Date().toISOString()),
-        status: 'processing',
+        date: deal.DATE_CREATE ? convertDateToISO(deal.DATE_CREATE) : undefined,
+        status: toOrderStatus(deal.STAGE_ID),
         title: deal.TITLE,
       };
     });

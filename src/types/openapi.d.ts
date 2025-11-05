@@ -667,20 +667,15 @@ export interface components {
       createdAt: string;
     };
     /** @enum {string} */
-    OrderStatus:
-      | 'pending'
-      | 'processing'
-      | 'shipped'
-      | 'delivered'
-      | 'canceled';
+    OrderStatus: 'new' | 'processing' | 'shipped' | 'delivered' | 'canceled';
     /** @enum {string} */
-    OrderSort: 'dateAsc' | 'dateDesc' | 'priceAsc' | 'priceDesc';
+    OrderSort: 'dateAsc' | 'dateDesc' | 'statusAsc' | 'statusDesc';
     Order: {
       id: number;
       code: string;
       /** Format: date-time */
-      date: string;
-      status: components['schemas']['OrderStatus'];
+      date?: string;
+      status?: components['schemas']['OrderStatus'];
       title: string;
     };
     OrdersResponse: {

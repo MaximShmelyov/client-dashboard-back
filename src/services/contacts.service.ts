@@ -4,7 +4,10 @@ import { BitrixService } from './bitrix24.service';
 export async function getContacts(filter = {}) {
   return await BitrixService.call<BitrixListResponse<Contact>>(
     'crm.contact.list',
-    { filter },
+    {
+      select: ['ID', 'EMAIL'],
+      filter,
+    },
   );
 }
 

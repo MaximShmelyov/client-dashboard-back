@@ -333,7 +333,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+  /orders/detailed:
+    get:
+      tags: [Orders]
+      summary: Request detailed order by id
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OrderDetailed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetailedResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden. Blocked, inactive or unverified user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   parameters:
     PageParam:
@@ -497,6 +531,38 @@ components:
           type: string
       required: [id, title, code]
 
+    OrderDetailed:
+      allOf:
+        - $ref: '#/components/schemas/Order'
+        - type: object
+          properties:
+            orderItems:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItem'
+          required: [orderItems]
+
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        orderId:
+          type: integer
+        raceId:
+          type: integer
+        name:
+          type: string
+        marking:
+          type: string
+        places:
+          type: integer
+        weight:
+          type: integer
+        volume:
+          type: integer
+      required: [id, orderId, raceId, name]
+
     OrdersResponse:
       type: object
       properties:
@@ -507,6 +573,13 @@ components:
         totalPages:
           type: integer
       required: [orders, totalPages]
+
+    OrderDetailedResponse:
+      type: object
+      properties:
+        orderDetailed:
+          $ref: '#/components/schemas/OrderDetailed'
+      required: [orderDetailed]
 
     ErrorResponse:
       type: object

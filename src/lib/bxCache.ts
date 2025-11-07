@@ -17,7 +17,9 @@ export class CachedBitrixService {
     const cached = await redis.get(cacheKey);
 
     if (cached) {
-      console.log(`Return cached BX value: ${method}`);
+      console.log(
+        `Return cached BX value: ${method}, ${JSON.stringify(params)}`,
+      );
       return JSON.parse(cached) as T;
     }
 

@@ -14,6 +14,7 @@ export class BitrixService {
     // if (response.data.error) throw new Error(response.data.error_description);
     // return response.data.result;
     try {
+      console.log(`BitrixService.call to ${method}, ${JSON.stringify(params)}`);
       const { data } = await axios.post(`${baseURL}${method}`, params);
       if (data.error)
         throw new Error(`${data.error}: ${data.error_description}`);

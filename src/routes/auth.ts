@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { ENV } from '../env';
 import { prisma } from '../prisma';
 import { AuthService } from '../services/auth.service';
+import { getContacts } from '../services/contacts.service';
 import { ResetAuthService } from '../services/reset.auth.service';
 import { TokenService } from '../services/token.service';
 import { components, paths } from '../types/openapi';
@@ -101,6 +102,7 @@ router.post('/login', async (req, res) => {
     };
     return res.status(403).json(notAllowedError);
   }
+  const contact = await getContacts({ EMAIL: user.email });
 
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) return res.status(401).json(invalidCredentialsError);
@@ -124,7 +126,7 @@ router.post('/login', async (req, res) => {
       email: user.email,
       name: user.name || undefined,
       createdAt: user.createdAt.toISOString(),
-      verifiedClient: user.verifiedClient,
+      verifiedClient: contact.result.length > 0,
     },
   };
   res.status(200).json(authResponse);

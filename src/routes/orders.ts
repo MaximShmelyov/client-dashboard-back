@@ -2,16 +2,14 @@ import { Router } from 'express';
 import { ENV } from '../env';
 import { authMiddleware } from '../middleware/auth';
 import { verifiedMiddleware } from '../middleware/verified';
-import { getContacts } from '../services/contacts.service';
 import { getDealsByContact } from '../services/deals.service';
-import { Deal } from '../types/bitrix';
+import { Contact, Deal } from '../types/bitrix';
 import { components, paths } from '../types/openapi';
 import { toBitrixStatus, toOrderStatus } from '../utils/bitrixStatusConverter';
 
 type OrdersQuery = paths['/orders']['get']['parameters']['query'];
 type OrdersResponse = components['schemas']['OrdersResponse'];
 type Order = components['schemas']['Order'];
-type User = components['schemas']['User'];
 type OrderDetailedQuery =
   paths['/orders/detailed']['get']['parameters']['query'];
 type OrderDetailedResponse = components['schemas']['OrderDetailedResponse'];
@@ -33,15 +31,7 @@ router.get('/', authMiddleware, verifiedMiddleware, async (req, res) => {
   const bitrixStart = bitrixPage * ENV.BITRIX_ITEMS_PER_PAGE;
   const bitrixOffset = globalStart % ENV.BITRIX_ITEMS_PER_PAGE;
 
-  const user: User = (req as any).user as User;
-  const contacts = await getContacts({ EMAIL: user.email });
-  if (contacts.result.length <= 0) {
-    const emptyOrderResponse: OrdersResponse = {
-      orders: [],
-      totalPages: 0,
-    };
-    return res.status(200).json(emptyOrderResponse);
-  }
+  const contact = (req as any).contact as Contact;
 
   const sort = ((): Record<string, string> => {
     switch (ordersQuery.sort) {
@@ -64,7 +54,7 @@ router.get('/', authMiddleware, verifiedMiddleware, async (req, res) => {
   })();
 
   const deals = await getDealsByContact(
-    Number.parseInt(contacts.result[0].ID),
+    Number.parseInt(contact.ID),
     status ? { STAGE_ID: status } : {},
     sort,
     bitrixStart,
@@ -96,25 +86,18 @@ router.get(
   async (req, res) => {
     const orderDetailedQuery: OrderDetailedQuery =
       req.query as any as OrderDetailedQuery;
-    const user: User = (req as any).user as User;
+    const contact = (req as any).contact as Contact;
 
-    const emptyResponse: ErrorResponse = {
-      statusCode: 404,
-      error: 'Not found',
-      message: `Not found order ${orderDetailedQuery.id} associated with the client`,
-    };
-
-    const contacts = await getContacts({ EMAIL: user.email });
-    // Contact not found
-    if (contacts.result.length <= 0) {
-      return res.status(404).json(emptyResponse);
-    }
-    const deals = await getDealsByContact(
-      Number.parseInt(contacts.result[0].ID),
-      { ID: orderDetailedQuery.id.toString() },
-    );
+    const deals = await getDealsByContact(Number.parseInt(contact.ID), {
+      ID: orderDetailedQuery.id.toString(),
+    });
     // Order not found
     if (deals.result.length <= 0) {
+      const emptyResponse: ErrorResponse = {
+        statusCode: 404,
+        error: 'Not found',
+        message: `Not found order ${orderDetailedQuery.id} associated with the client`,
+      };
       return res.status(404).json(emptyResponse);
     }
     const deal: Deal = deals.result[0];

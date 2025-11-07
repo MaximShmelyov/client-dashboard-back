@@ -4,6 +4,7 @@ import { Router } from 'express';
 import { ENV } from '../env';
 import { authMiddleware } from '../middleware/auth';
 import { prisma } from '../prisma';
+import { getContacts } from '../services/contacts.service';
 import { components } from '../types/openapi';
 
 type AccountInfoResponse = components['schemas']['AccountInfoResponse'];
@@ -14,12 +15,13 @@ const router = Router();
 
 router.get('/me', authMiddleware, async (req, res) => {
   const user: User = (req as any).user as User;
+  const contact = await getContacts({ EMAIL: user.email });
   const accountInfoResponse: AccountInfoResponse = {
     user: {
       email: user.email,
       name: user.name || undefined,
       createdAt: user.createdAt.toISOString(),
-      verifiedClient: user.verifiedClient,
+      verifiedClient: contact.result.length > 0,
     },
   };
   res.status(200).json(accountInfoResponse);

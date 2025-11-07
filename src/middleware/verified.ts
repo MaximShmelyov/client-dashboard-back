@@ -1,5 +1,6 @@
 import { User } from '@prisma/client';
 import { NextFunction, Request, Response } from 'express';
+import { getContacts } from '../services/contacts.service';
 import { components } from '../types/openapi';
 
 type ErrorResponse = components['schemas']['ErrorResponse'];
@@ -10,7 +11,9 @@ export async function verifiedMiddleware(
   next: NextFunction,
 ) {
   const user: User = (req as any).user as User;
-  if (!user.verifiedClient) {
+  // @TODO: cache it
+  const contacts = await getContacts({ EMAIL: user.email });
+  if (contacts.result.length <= 0) {
     const forbiddenErrorResponse: ErrorResponse = {
       statusCode: 403,
       error: 'Forbidden',
@@ -18,6 +21,7 @@ export async function verifiedMiddleware(
     };
     return res.status(403).json(forbiddenErrorResponse);
   }
+  (req as any).contact = contacts.result[0];
 
   next();
 }

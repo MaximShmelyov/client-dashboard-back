@@ -1,5 +1,6 @@
 import { ENV } from '../env';
 import { BitrixService } from '../services/bitrix24.service';
+import { logger } from '../utils/logger';
 import { redis } from './redis';
 
 const CACHE_PREFIX = 'bitrix:';
@@ -17,13 +18,13 @@ export class CachedBitrixService {
     const cached = await redis.get(cacheKey);
 
     if (cached) {
-      console.log(
+      logger.debug(
         `Return cached BX value: ${method}, ${JSON.stringify(params)}`,
       );
       return JSON.parse(cached) as T;
     }
 
-    console.log(`Call to BX: ${method}`);
+    logger.debug(`Call to BX: ${method}`);
     const result = await BitrixService.call<T>(method, params);
 
     await redis.set(cacheKey, JSON.stringify(result), { EX: ttl });

@@ -3,6 +3,7 @@ import { ENV } from '../env';
 import { prisma } from '../prisma';
 import { ActivationRepository } from '../repositories/activation.repository';
 import { RefreshRepository } from '../repositories/refresh.repository';
+import { logger } from '../utils/logger';
 
 const activationRepo = new ActivationRepository();
 const refreshRepo = new RefreshRepository();
@@ -10,7 +11,7 @@ const refreshRepo = new RefreshRepository();
 export class AuthService {
   async register(email: string, password: string, name?: string) {
     const user = await prisma.user.create({ data: { email, password, name } });
-    console.log(`Registered user ${user.email}`);
+    logger.debug(`Registered user ${user.email}`);
 
     return { user };
   }
@@ -22,7 +23,7 @@ export class AuthService {
       user.id,
       ENV.ACTIVATION_CODE_TTL_MINUTES,
     );
-    console.log(`Generated code: ${code} for user: ${userId}`);
+    logger.debug(`Generated code: ${code} for user: ${userId}`);
     return code;
   }
 

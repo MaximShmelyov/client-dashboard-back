@@ -107,7 +107,7 @@ router.post('/login', async (req, res) => {
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) return res.status(401).json(invalidCredentialsError);
 
-  const isProd = ENV.ENVIRONMENT === 'prod';
+  const isProd = ENV.ENVIRONMENT === 'production';
   const tokens = TokenService.generateTokens(user.id);
   await authService.saveRefreshToken(
     user.id,
@@ -214,7 +214,7 @@ router.get('/resetpassword', async (req, res) => {
 
   const resetCode = resetAuthService.requestResetCode(user.id);
   // @TODO: send reset code to user
-  console.log(`Reset code: ${resetCode} for user ${user.id} generated.`);
+  req.log.debug(`Reset code: ${resetCode} for user ${user.id} generated.`);
 
   res.sendStatus(204);
 });
@@ -253,7 +253,7 @@ router.post('/logout', async (req, res) => {
 
     await authService.removeRefreshToken(payload.userId, refreshToken);
   } catch (e) {
-    console.error(e);
+    req.log.error(e);
   } finally {
     res.clearCookie('refreshToken', {
       httpOnly: true,

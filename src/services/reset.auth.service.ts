@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { ENV } from '../env';
 import { prisma } from '../prisma';
 import { ResetRepository } from '../repositories/reset.repository';
+import { logger } from '../utils/logger';
 
 const resetRepo = new ResetRepository();
 
@@ -20,7 +21,7 @@ export class ResetAuthService {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error(`User with id: ${userId} not found`);
     const code = await resetRepo.create(user.id, ENV.RESET_CODE_TTL_MINUTES);
-    console.log(`Generated reset code: ${code} for user: ${userId}`);
+    logger.debug(`Generated reset code: ${code} for user: ${userId}`);
     return code;
   }
 
@@ -33,7 +34,7 @@ export class ResetAuthService {
   async resetPasswordByCode(userId: number, code: string): Promise<boolean> {
     const valid = await resetRepo.verify(userId, code);
     if (!valid) {
-      console.warn('Invalid or expired reset code');
+      logger.warn('Invalid or expired reset code');
       return false;
     }
 
@@ -46,7 +47,7 @@ export class ResetAuthService {
       data: { password: newHashed },
     });
     // @TODO: notify user about new password
-    console.log(`User ${userId} got new password: ${newPassword}`);
+    logger.debug(`User ${userId} got new password: ${newPassword}`);
 
     return true;
   }

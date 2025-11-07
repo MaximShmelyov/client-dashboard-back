@@ -1,5 +1,6 @@
 import { createClient } from 'redis';
 import { ENV } from '../env';
+import { logger } from '../utils/logger';
 
 export const redis = createClient({
   url: ENV.REDIS_URL,
@@ -14,12 +15,12 @@ export const redis = createClient({
 });
 
 redis.on('error', (err) => {
-  console.error('Redis Client Error', err);
+  logger.error('Redis Client Error', err);
 });
 
 export async function connectRedis() {
   if (!redis.isOpen) {
     await redis.connect();
-    console.log('Connected to Redis');
+    logger.debug('Connected to Redis');
   }
 }

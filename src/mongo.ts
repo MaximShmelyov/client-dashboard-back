@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { logger } from './utils/logger';
 
 const MONGO_URI = process.env.MONGO_URI;
 
@@ -7,13 +8,13 @@ export async function connectMongo() {
 
   if (mongoose.connection.readyState === 0) {
     await mongoose.connect(MONGO_URI);
-    console.log('Connected to MongoDB');
+    logger.debug('Connected to MongoDB');
   }
 }
 
 export async function disconnectMongo() {
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
-    console.log('MongoDB disconnected');
+    logger.debug('MongoDB disconnected');
   }
 }

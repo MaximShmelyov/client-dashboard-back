@@ -1,18 +1,14 @@
+import { ENV } from '../env';
+import { CachedBitrixService } from '../lib/bxCache';
 import { BitrixListResponse, Contact } from '../types/bitrix';
-import { BitrixService } from './bitrix24.service';
 
 export async function getContacts(filter = {}) {
-  return await BitrixService.call<BitrixListResponse<Contact>>(
+  return await CachedBitrixService.call<BitrixListResponse<Contact>>(
     'crm.contact.list',
     {
       select: ['ID', 'EMAIL'],
       filter,
     },
+    ENV.REDIS_CACHE_TTL_SHORT,
   );
-}
-
-export async function getContactById(id: number) {
-  return await BitrixService.call<{ CONTACT: Contact }>('crm.contact.get', {
-    id,
-  });
 }

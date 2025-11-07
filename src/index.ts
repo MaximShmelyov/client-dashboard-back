@@ -6,6 +6,7 @@ import express from 'express';
 import * as OpenApiValidator from 'express-openapi-validator';
 import YAML from 'yamljs';
 import { ENV } from './env';
+import { connectRedis } from './lib/redis';
 import { connectMongo } from './mongo';
 import authRoutes from './routes/auth';
 import orderRoutes from './routes/orders';
@@ -63,6 +64,11 @@ app.use(
 
 async function bootstrap() {
   await connectMongo();
+  try {
+    await connectRedis();
+  } catch {
+    console.warn('Work w/o redis');
+  }
 
   app.listen(ENV.PORT, () => {
     console.log(`Server running at http://localhost:${ENV.PORT}`);

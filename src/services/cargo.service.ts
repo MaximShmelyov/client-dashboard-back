@@ -1,23 +1,32 @@
+import { ENV } from '../env';
+import { CachedBitrixService } from '../lib/bxCache';
 import {
   BitrixListResponse,
   BitrixSingleResponse,
   Cargo,
 } from '../types/bitrix';
-import { BitrixService } from './bitrix24.service';
 
 const ENTITY_ID = 168;
 
 export async function getCargoByDeal(dealId: number) {
-  return await BitrixService.call<BitrixListResponse<Cargo>>('crm.item.list', {
-    entityTypeId: ENTITY_ID,
-    filter: { parentId2: dealId },
-    select: ['*'],
-  });
+  return await CachedBitrixService.call<BitrixListResponse<Cargo>>(
+    'crm.item.list',
+    {
+      entityTypeId: ENTITY_ID,
+      filter: { parentId2: dealId },
+      select: ['*'],
+    },
+    ENV.REDIS_CACHE_TTL_LONG,
+  );
 }
 
 export async function getCargoById(id: number) {
-  return await BitrixService.call<BitrixSingleResponse<Cargo>>('crm.item.get', {
-    entityTypeId: ENTITY_ID,
-    id,
-  });
+  return await CachedBitrixService.call<BitrixSingleResponse<Cargo>>(
+    'crm.item.get',
+    {
+      entityTypeId: ENTITY_ID,
+      id,
+    },
+    ENV.REDIS_CACHE_TTL_LONG,
+  );
 }

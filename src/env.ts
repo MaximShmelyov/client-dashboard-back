@@ -18,4 +18,15 @@ export const ENV = {
   BITRIX_ITEMS_PER_PAGE: process.env.BITRIX_ITEMS_PER_PAGE
     ? Number(process.env.BITRIX_ITEMS_PER_PAGE)
     : 50,
+  REDIS_URL: process.env.REDIS_URL!,
+  REDIS_SECRET: process.env.REDIS_SECRET!,
+  REDIS_MAX_RETRY_COUNT: process.env.REDIS_MAX_RETRY_COUNT
+    ? Number(process.env.REDIS_MAX_RETRY_COUNT)
+    : 0,
+  REDIS_CACHE_TTL_SHORT: process.env.REDIS_CACHE_TTL_SHORT
+    ? Number(process.env.REDIS_CACHE_TTL_SHORT)
+    : 60,
+  REDIS_CACHE_TTL_LONG: process.env.REDIS_CACHE_TTL_LONG
+    ? Number(process.env.REDIS_CACHE_TTL_LONG)
+    : 300,
 };

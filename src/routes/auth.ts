@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import { Router } from 'express';
+import { RateLimitRequestHandler } from 'express-rate-limit';
 import { ENV } from '../env';
 import { prisma } from '../prisma';
 import { AuthService } from '../services/auth.service';
@@ -22,246 +23,280 @@ type AccountActivatedResponse =
 type VerifyResetQuery =
   paths['/auth/verifyresetcode']['get']['parameters']['query'];
 
-const router = Router();
-const authService = new AuthService();
-const resetAuthService = new ResetAuthService();
+export function createAuthRouter(limiters: {
+  apiLimiter: RateLimitRequestHandler;
+  registerLimiter: RateLimitRequestHandler;
+  loginLimiter: RateLimitRequestHandler;
+  requestCodeLimiter: RateLimitRequestHandler;
+}): Router {
+  const router = Router();
+  const authService = new AuthService();
+  const resetAuthService = new ResetAuthService();
 
-router.post('/register', async (req, res) => {
-  const body: RegisterRequest = req.body;
-  const { email, password, name } = body;
+  /**
+   * /register endpoint
+   */
+  router.post('/register', limiters.registerLimiter, async (req, res) => {
+    const body: RegisterRequest = req.body;
+    const { email, password, name } = body;
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    if (existing.activated) {
-      const conflictResponse: RegisterConflictResponse = {
-        statusCode: 409,
-        error: 'Conflict',
-        message: 'User already exists',
-      };
-      return res.status(409).json(conflictResponse);
-    } else {
-      await prisma.user.delete({ where: { id: existing.id } });
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      if (existing.activated) {
+        const conflictResponse: RegisterConflictResponse = {
+          statusCode: 409,
+          error: 'Conflict',
+          message: 'User already exists',
+        };
+        return res.status(409).json(conflictResponse);
+      } else {
+        await prisma.user.delete({ where: { id: existing.id } });
+      }
     }
-  }
 
-  const hashed = await bcrypt.hash(password, ENV.PASSWORD_ROUNDS);
-  await authService.register(email, hashed, name);
+    const hashed = await bcrypt.hash(password, ENV.PASSWORD_ROUNDS);
+    await authService.register(email, hashed, name);
 
-  const registeredResponse: RegisteredResponse = {
-    message: 'Registered',
-  };
-
-  res.status(201).json(registeredResponse);
-});
-
-router.get('/activate', async (req, res) => {
-  const code = req.query.code as string;
-  const email = req.query.email as string;
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    const errorResponse: ErrorResponse = {
-      statusCode: 400,
-      error: 'Error',
-      message: 'No valid user found',
+    const registeredResponse: RegisteredResponse = {
+      message: 'Registered',
     };
-    return res.status(400).json(errorResponse);
-  }
 
-  if (!(await authService.activateAccount(user.id, code))) {
-    const errorResponse: ErrorResponse = {
-      statusCode: 401,
-      error: 'Error',
-      message: 'Invalid code provided',
-    };
-    return res.status(401).json(errorResponse);
-  }
-
-  const accountActivatedResponse: AccountActivatedResponse = {
-    message: 'Account activated',
-  };
-  res.status(200).json(accountActivatedResponse);
-});
-
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  const user = await prisma.user.findUnique({ where: { email } });
-
-  const invalidCredentialsError: ErrorResponse = {
-    statusCode: 401,
-    error: 'Unauthorized',
-    message: 'Invalid credentials',
-  };
-
-  if (!user) return res.status(401).json(invalidCredentialsError);
-
-  if (user.blocked || !user.activated) {
-    const notAllowedError: ErrorResponse = {
-      statusCode: 403,
-      error: 'Forbidden',
-      message: 'Account blocked or not active',
-    };
-    return res.status(403).json(notAllowedError);
-  }
-  const contact = await getContacts({ EMAIL: user.email });
-
-  const valid = await bcrypt.compare(password, user.password);
-  if (!valid) return res.status(401).json(invalidCredentialsError);
-
-  const isProd = ENV.ENVIRONMENT === 'production';
-  const tokens = TokenService.generateTokens(user.id);
-  await authService.saveRefreshToken(
-    user.id,
-    tokens.refreshToken,
-    ENV.REFRESH_TOKEN_EXPIRES_IN_MINUTES,
-  );
-  res.cookie('refreshToken', tokens.refreshToken, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
-    maxAge: ENV.COOKIES_MAX_AGE,
+    res.status(201).json(registeredResponse);
   });
-  const authResponse: AuthResponse = {
-    accessToken: tokens.accessToken,
-    user: {
-      email: user.email,
-      name: user.name || undefined,
-      createdAt: user.createdAt.toISOString(),
-      verifiedClient: contact.result.length > 0,
-    },
-  };
-  res.status(200).json(authResponse);
-});
 
-router.get('/requestcode', async (req, res) => {
-  const email = req.query.email as string;
+  /**
+   * /activate endpoint
+   */
+  router.get('/activate', limiters.apiLimiter, async (req, res) => {
+    const code = req.query.code as string;
+    const email = req.query.email as string;
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      const errorResponse: ErrorResponse = {
+        statusCode: 400,
+        error: 'Error',
+        message: 'No valid user found',
+      };
+      return res.status(400).json(errorResponse);
+    }
 
-  const user = await prisma.user.findUnique({
-    where: { email, activated: false, blocked: false },
-  });
-  if (!user) {
-    const errorResponse: ErrorResponse = {
-      statusCode: 400,
-      error: 'Unauthorized',
-      message: 'No valid user found',
+    if (!(await authService.activateAccount(user.id, code))) {
+      const errorResponse: ErrorResponse = {
+        statusCode: 401,
+        error: 'Error',
+        message: 'Invalid code provided',
+      };
+      return res.status(401).json(errorResponse);
+    }
+
+    const accountActivatedResponse: AccountActivatedResponse = {
+      message: 'Account activated',
     };
-    return res.status(400).json(errorResponse);
-  }
+    res.status(200).json(accountActivatedResponse);
+  });
 
-  const code = await authService.requestCode(user.id);
-  // @TODO: request code sending
+  /**
+   * /login endpoint
+   */
+  router.post('/login', limiters.loginLimiter, async (req, res) => {
+    const { email, password } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
 
-  const activationCodeSentResponse: ActivationCodeSentResponse = {
-    message: 'Activation code sent',
-  };
-  res.status(200).json(activationCodeSentResponse);
-});
-
-router.post('/refresh', async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
-  if (!refreshToken) {
-    const errorResponse: ErrorResponse = {
+    const invalidCredentialsError: ErrorResponse = {
       statusCode: 401,
       error: 'Unauthorized',
-      message: 'Missing refresh token',
+      message: 'Invalid credentials',
     };
-    return res.status(401).json(errorResponse);
-  }
 
-  try {
-    const payload = await authService.verifyRefreshToken(refreshToken);
-    if (!payload) throw new Error('payload is null');
-    await authService.removeRefreshToken(payload.userId, refreshToken);
-    const tokens = TokenService.generateTokens(payload.userId);
+    if (!user) return res.status(401).json(invalidCredentialsError);
+
+    if (user.blocked || !user.activated) {
+      const notAllowedError: ErrorResponse = {
+        statusCode: 403,
+        error: 'Forbidden',
+        message: 'Account blocked or not active',
+      };
+      return res.status(403).json(notAllowedError);
+    }
+    const contact = await getContacts({ EMAIL: user.email });
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) return res.status(401).json(invalidCredentialsError);
+
+    const isProd = ENV.ENVIRONMENT === 'production';
+    const tokens = TokenService.generateTokens(user.id);
     await authService.saveRefreshToken(
-      payload.userId,
+      user.id,
       tokens.refreshToken,
       ENV.REFRESH_TOKEN_EXPIRES_IN_MINUTES,
     );
-
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: ENV.COOKIES_MAX_AGE,
     });
-    const accessTokenResponse: AccessTokenResponse = {
+    const authResponse: AuthResponse = {
       accessToken: tokens.accessToken,
+      user: {
+        email: user.email,
+        name: user.name || undefined,
+        createdAt: user.createdAt.toISOString(),
+        verifiedClient: contact.result.length > 0,
+      },
     };
-    res.status(200).json(accessTokenResponse);
-  } catch {
-    const errorResponse: ErrorResponse = {
-      statusCode: 401,
-      error: 'Unauthorized',
-      message: 'Invalid or expired refresh token',
-    };
-    res.status(401).json(errorResponse);
-  }
-});
-
-router.get('/resetpassword', async (req, res) => {
-  const email = req.query.email as string;
-  const user = await prisma.user.findUnique({
-    where: { email, activated: true, blocked: false },
+    res.status(200).json(authResponse);
   });
-  if (!user) {
-    const errorResponse: ErrorResponse = {
-      statusCode: 400,
-      error: 'Bad request',
-      message: 'No valid user found',
-    };
-    return res.status(400).json(errorResponse);
-  }
 
-  const resetCode = resetAuthService.requestResetCode(user.id);
-  // @TODO: send reset code to user
-  req.log.debug(`Reset code: ${resetCode} for user ${user.id} generated.`);
+  /**
+   * /requestcode endpoint
+   */
+  router.get('/requestcode', limiters.requestCodeLimiter, async (req, res) => {
+    const email = req.query.email as string;
 
-  res.sendStatus(204);
-});
-
-router.get('/verifyresetcode', async (req, res) => {
-  const { code, email } = req.query as VerifyResetQuery;
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
-  if (!user) {
-    const errorResponse: ErrorResponse = {
-      statusCode: 400,
-      error: 'Bad request',
-      message: 'No valid user found',
-    };
-    return res.status(400).json(errorResponse);
-  }
-  if (!(await resetAuthService.resetPasswordByCode(user.id, code))) {
-    const wrongCodeError: ErrorResponse = {
-      statusCode: 401,
-      error: 'Unauthorized',
-      message: 'Invalid code',
-    };
-    return res.status(401).json(wrongCodeError);
-  }
-
-  res.sendStatus(204);
-});
-
-router.post('/logout', async (req, res) => {
-  try {
-    const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) throw new Error('refresh token is missing');
-    const payload = await authService.verifyRefreshToken(refreshToken);
-    if (!payload) throw new Error('payload is null');
-
-    await authService.removeRefreshToken(payload.userId, refreshToken);
-  } catch (e) {
-    req.log.error(e);
-  } finally {
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+    const user = await prisma.user.findUnique({
+      where: { email, activated: false, blocked: false },
     });
-  }
-  res.sendStatus(204);
-});
+    if (!user) {
+      const errorResponse: ErrorResponse = {
+        statusCode: 400,
+        error: 'Unauthorized',
+        message: 'No valid user found',
+      };
+      return res.status(400).json(errorResponse);
+    }
 
-export default router;
+    const code = await authService.requestCode(user.id);
+    // @TODO: request code sending
+
+    const activationCodeSentResponse: ActivationCodeSentResponse = {
+      message: 'Activation code sent',
+    };
+    res.status(200).json(activationCodeSentResponse);
+  });
+
+  /**
+   * /refresh endpoint
+   */
+  router.post('/refresh', limiters.apiLimiter, async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      const errorResponse: ErrorResponse = {
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Missing refresh token',
+      };
+      return res.status(401).json(errorResponse);
+    }
+
+    try {
+      const payload = await authService.verifyRefreshToken(refreshToken);
+      if (!payload) throw new Error('payload is null');
+      await authService.removeRefreshToken(payload.userId, refreshToken);
+      const tokens = TokenService.generateTokens(payload.userId);
+      await authService.saveRefreshToken(
+        payload.userId,
+        tokens.refreshToken,
+        ENV.REFRESH_TOKEN_EXPIRES_IN_MINUTES,
+      );
+
+      res.cookie('refreshToken', tokens.refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        maxAge: ENV.COOKIES_MAX_AGE,
+      });
+      const accessTokenResponse: AccessTokenResponse = {
+        accessToken: tokens.accessToken,
+      };
+      res.status(200).json(accessTokenResponse);
+    } catch {
+      const errorResponse: ErrorResponse = {
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Invalid or expired refresh token',
+      };
+      res.status(401).json(errorResponse);
+    }
+  });
+
+  /**
+   * /resetpassword endpoint
+   */
+  router.get(
+    '/resetpassword',
+    limiters.requestCodeLimiter,
+    async (req, res) => {
+      const email = req.query.email as string;
+      const user = await prisma.user.findUnique({
+        where: { email, activated: true, blocked: false },
+      });
+      if (!user) {
+        const errorResponse: ErrorResponse = {
+          statusCode: 400,
+          error: 'Bad request',
+          message: 'No valid user found',
+        };
+        return res.status(400).json(errorResponse);
+      }
+
+      const resetCode = resetAuthService.requestResetCode(user.id);
+      // @TODO: send reset code to user
+      req.log.debug(`Reset code: ${resetCode} for user ${user.id} generated.`);
+
+      res.sendStatus(204);
+    },
+  );
+
+  /**
+   * /verifyresetcode endpoint
+   */
+  router.get('/verifyresetcode', limiters.apiLimiter, async (req, res) => {
+    const { code, email } = req.query as VerifyResetQuery;
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
+      const errorResponse: ErrorResponse = {
+        statusCode: 400,
+        error: 'Bad request',
+        message: 'No valid user found',
+      };
+      return res.status(400).json(errorResponse);
+    }
+    if (!(await resetAuthService.resetPasswordByCode(user.id, code))) {
+      const wrongCodeError: ErrorResponse = {
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Invalid code',
+      };
+      return res.status(401).json(wrongCodeError);
+    }
+
+    res.sendStatus(204);
+  });
+
+  /**
+   * /logout endpoint
+   */
+  router.post('/logout', limiters.apiLimiter, async (req, res) => {
+    try {
+      const refreshToken = req.cookies.refreshToken;
+      if (!refreshToken) throw new Error('refresh token is missing');
+      const payload = await authService.verifyRefreshToken(refreshToken);
+      if (!payload) throw new Error('payload is null');
+
+      await authService.removeRefreshToken(payload.userId, refreshToken);
+    } catch (e) {
+      req.log.error(e);
+    } finally {
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+      });
+    }
+    res.sendStatus(204);
+  });
+  return router;
+}

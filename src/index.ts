@@ -8,11 +8,12 @@ import YAML from 'yamljs';
 import { ENV } from './env';
 import { connectRedis } from './lib/redis';
 import { errorHandler } from './middleware/errorHandler';
+import { createLimiters } from './middleware/limiters';
 import { requestLogger } from './middleware/requestLogger';
 import { connectMongo } from './mongo';
-import authRoutes from './routes/auth';
-import orderRoutes from './routes/orders';
-import userRoutes from './routes/users';
+import { createAuthRouter } from './routes/auth';
+import { createOrdersRouter } from './routes/orders';
+import { createUsersRouter } from './routes/users';
 import { logger } from './utils/logger';
 
 const app = express();
@@ -41,19 +42,25 @@ app.use(
   }),
 );
 
-app.use('/auth', authRoutes);
-app.use('/profile', userRoutes);
-app.use('/orders', orderRoutes);
-
 app.use(errorHandler);
 
 async function bootstrap() {
   await connectMongo();
-  try {
-    await connectRedis();
-  } catch {
-    logger.warn('Work w/o redis');
-  }
+  await connectRedis();
+
+  const limiters = createLimiters();
+
+  app.use(
+    '/auth',
+    createAuthRouter({
+      apiLimiter: limiters.apiLimiter,
+      loginLimiter: limiters.loginLimiter,
+      registerLimiter: limiters.registerLimiter,
+      requestCodeLimiter: limiters.requestCodeLimiter,
+    }),
+  );
+  app.use('/profile', createUsersRouter({ apiLimiter: limiters.apiLimiter }));
+  app.use('/orders', createOrdersRouter({ apiLimiter: limiters.apiLimiter }));
 
   app.listen(ENV.PORT, () => {
     logger.debug(`Server running at http://localhost:${ENV.PORT}`);

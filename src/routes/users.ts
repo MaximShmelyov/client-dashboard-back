@@ -1,6 +1,7 @@
 import { User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { Router } from 'express';
+import { RateLimitRequestHandler } from 'express-rate-limit';
 import { ENV } from '../env';
 import { authMiddleware } from '../middleware/auth';
 import { prisma } from '../prisma';
@@ -11,52 +12,60 @@ type AccountInfoResponse = components['schemas']['AccountInfoResponse'];
 type ErrorResponse = components['schemas']['ErrorResponse'];
 type ChangePasswordRequest = components['schemas']['ChangePasswordRequest'];
 
-const router = Router();
+export function createUsersRouter(limiters: {
+  apiLimiter: RateLimitRequestHandler;
+}): Router {
+  const router = Router();
 
-router.get('/me', authMiddleware, async (req, res) => {
-  const user: User = (req as any).user as User;
-  const contact = await getContacts({ EMAIL: user.email });
-  const accountInfoResponse: AccountInfoResponse = {
-    user: {
-      email: user.email,
-      name: user.name || undefined,
-      createdAt: user.createdAt.toISOString(),
-      verifiedClient: contact.result.length > 0,
-    },
-  };
-  res.status(200).json(accountInfoResponse);
-});
-
-router.post('/changepassword', authMiddleware, async (req, res) => {
-  const user: User = (req as any).user as User;
-  const changePasswordRequest: ChangePasswordRequest = req.body;
-
-  const validOldPassword = await bcrypt.compare(
-    changePasswordRequest.oldPassword,
-    user.password,
-  );
-  if (!validOldPassword) {
-    const invalidPasswordError: ErrorResponse = {
-      statusCode: 403,
-      error: 'Forbidden',
-      message: "Password doesn't match",
+  router.get('/me', limiters.apiLimiter, authMiddleware, async (req, res) => {
+    const user: User = (req as any).user as User;
+    const contact = await getContacts({ EMAIL: user.email });
+    const accountInfoResponse: AccountInfoResponse = {
+      user: {
+        email: user.email,
+        name: user.name || undefined,
+        createdAt: user.createdAt.toISOString(),
+        verifiedClient: contact.result.length > 0,
+      },
     };
-    return res.status(403).json(invalidPasswordError);
-  }
-
-  const newHashed = await bcrypt.hash(
-    changePasswordRequest.newPassword,
-    ENV.PASSWORD_ROUNDS,
-  );
-  // @TODO: send notification (by email) to user
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      password: newHashed,
-    },
+    res.status(200).json(accountInfoResponse);
   });
 
-  res.sendStatus(204);
-});
+  router.post(
+    '/changepassword',
+    limiters.apiLimiter,
+    authMiddleware,
+    async (req, res) => {
+      const user: User = (req as any).user as User;
+      const changePasswordRequest: ChangePasswordRequest = req.body;
 
-export default router;
+      const validOldPassword = await bcrypt.compare(
+        changePasswordRequest.oldPassword,
+        user.password,
+      );
+      if (!validOldPassword) {
+        const invalidPasswordError: ErrorResponse = {
+          statusCode: 403,
+          error: 'Forbidden',
+          message: "Password doesn't match",
+        };
+        return res.status(403).json(invalidPasswordError);
+      }
+
+      const newHashed = await bcrypt.hash(
+        changePasswordRequest.newPassword,
+        ENV.PASSWORD_ROUNDS,
+      );
+      // @TODO: send notification (by email) to user
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          password: newHashed,
+        },
+      });
+
+      res.sendStatus(204);
+    },
+  );
+  return router;
+}

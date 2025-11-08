@@ -76,7 +76,7 @@ const shutdown = async () => {
   logger.info('Shutting down gracefully...');
   server.close(async (err) => {
     if (err) {
-      logger.error('Error during server close', err);
+      logger.error(`Error during server close ${String(err)}`);
       process.exit(1);
     }
     try {
@@ -85,7 +85,7 @@ const shutdown = async () => {
       logger.info('Shutdown complete');
       process.exit(0);
     } catch (e) {
-      logger.error('Error during shutdown', e);
+      logger.error(`Error during shutdown ${String(e)}`);
       process.exit(1);
     }
   });

@@ -8,13 +8,13 @@ export async function connectMongo() {
 
   if (mongoose.connection.readyState === 0) {
     await mongoose.connect(MONGO_URI);
-    logger.debug('Connected to MongoDB');
+    logger.info('Connected to MongoDB');
   }
 }
 
 export async function disconnectMongo() {
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
-    logger.debug('MongoDB disconnected');
+    logger.info('MongoDB disconnected');
   }
 }

@@ -1,3 +1,20 @@
+/**
+ * Orders Router Module
+ *
+ * Provides endpoints for retrieving orders and detailed order information
+ * associated with an authenticated and verified contact.
+ *
+ * Endpoints:
+ *  - GET /orders:      List orders with pagination, sorting, and status filtering.
+ *  - GET /orders/detailed:  Get detailed information about a specific order.
+ *
+ * Middlewares:
+ *  - Rate limiter (per route)
+ *  - Authentication
+ *  - Verification
+ *
+ * @module routes/orders
+ */
 import { Router } from 'express';
 import { RateLimitRequestHandler } from 'express-rate-limit';
 import { ENV } from '../env';
@@ -18,15 +35,41 @@ type OrderDetailed = components['schemas']['OrderDetailed'];
 type OrderItem = components['schemas']['OrderItem'];
 type ErrorResponse = components['schemas']['ErrorResponse'];
 
+/**
+ * Creates an Express router for order-related endpoints.
+ *
+ * @param {Object} limiters - Object containing rate limiters.
+ * @param {RateLimitRequestHandler} limiters.apiLimiter - Rate limiter for API requests.
+ * @returns {Router} Configured Express router.
+ */
 export function createOrdersRouter(limiters: {
   apiLimiter: RateLimitRequestHandler;
 }): Router {
   const router = Router();
 
+  /**
+   * Converts a date string to ISO format.
+   * @param {string} date - Date string.
+   * @returns {string} ISO formatted date string.
+   */
   function convertDateToISO(date: string): string {
     return new Date(date).toISOString();
   }
 
+  /**
+   * GET /orders
+   *
+   * Returns a paginated list of orders for the authenticated contact.
+   * Supports sorting and status filtering.
+   *
+   * Query parameters:
+   *  - page: number (required)
+   *  - pageSize: number (required)
+   *  - sort: 'dateAsc' | 'dateDesc' | 'statusAsc' | 'statusDesc' (optional)
+   *  - status: string (optional)
+   *
+   * Response: OrdersResponse
+   */
   router.get(
     '/',
     limiters.apiLimiter,
@@ -93,6 +136,17 @@ export function createOrdersRouter(limiters: {
     },
   );
 
+  /**
+   * GET /orders/detailed
+   *
+   * Returns detailed information about a specific order for the authenticated contact.
+   *
+   * Query parameters:
+   *  - id: number (required)
+   *
+   * Response: OrderDetailedResponse
+   *  - 404 if order not found or not associated with the contact.
+   */
   router.get(
     '/detailed',
     limiters.apiLimiter,

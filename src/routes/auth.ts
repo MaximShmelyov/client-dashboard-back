@@ -1,3 +1,26 @@
+/**
+ * Auth Router Module
+ *
+ * Provides authentication and authorization endpoints:
+ * - User registration and activation
+ * - Login and logout
+ * - Token refresh
+ * - Password reset and verification
+ *
+ * Endpoints:
+ *   - POST   /auth/register         Register new user
+ *   - GET    /auth/activate         Activate user account
+ *   - POST   /auth/login            User login
+ *   - GET    /auth/requestcode      Request activation code
+ *   - POST   /auth/refresh          Refresh access token
+ *   - GET    /auth/resetpassword    Request password reset code
+ *   - GET    /auth/verifyresetcode  Verify password reset code and reset password
+ *   - POST   /auth/logout           Logout user and remove refresh token
+ *
+ * Each endpoint uses appropriate rate limiting.
+ *
+ * @module routes/auth
+ */
 import bcrypt from 'bcrypt';
 import { Router } from 'express';
 import { RateLimitRequestHandler } from 'express-rate-limit';
@@ -23,6 +46,16 @@ type AccountActivatedResponse =
 type VerifyResetQuery =
   paths['/auth/verifyresetcode']['get']['parameters']['query'];
 
+/**
+ * Creates an Express router for authentication-related endpoints.
+ *
+ * @param {Object} limiters - Object containing rate limiters for endpoints.
+ * @param {RateLimitRequestHandler} limiters.apiLimiter - General API limiter.
+ * @param {RateLimitRequestHandler} limiters.registerLimiter - Registration limiter.
+ * @param {RateLimitRequestHandler} limiters.loginLimiter - Login limiter.
+ * @param {RateLimitRequestHandler} limiters.requestCodeLimiter - Code request limiter.
+ * @returns {Router} Configured Express router.
+ */
 export function createAuthRouter(limiters: {
   apiLimiter: RateLimitRequestHandler;
   registerLimiter: RateLimitRequestHandler;
@@ -34,7 +67,10 @@ export function createAuthRouter(limiters: {
   const resetAuthService = new ResetAuthService();
 
   /**
-   * /register endpoint
+   * POST /auth/register
+   * Registers a new user. If user exists and not activated, deletes old record.
+   * Body: { email, password, name }
+   * Response: 201 RegisteredResponse | 409 RegisterConflictResponse
    */
   router.post('/register', limiters.registerLimiter, async (req, res) => {
     const body: RegisterRequest = req.body;
@@ -65,7 +101,10 @@ export function createAuthRouter(limiters: {
   });
 
   /**
-   * /activate endpoint
+   * GET /auth/activate
+   * Activates a user account using code and email.
+   * Query: ?code=...&email=...
+   * Response: 200 AccountActivatedResponse | 400/401 ErrorResponse
    */
   router.get('/activate', limiters.apiLimiter, async (req, res) => {
     const code = req.query.code as string;
@@ -96,7 +135,10 @@ export function createAuthRouter(limiters: {
   });
 
   /**
-   * /login endpoint
+   * POST /auth/login
+   * Authenticates user and returns access token and user info.
+   * Body: { email, password }
+   * Response: 200 AuthResponse | 401/403 ErrorResponse
    */
   router.post('/login', limiters.loginLimiter, async (req, res) => {
     const { email, password } = req.body;
@@ -149,7 +191,10 @@ export function createAuthRouter(limiters: {
   });
 
   /**
-   * /requestcode endpoint
+   * GET /auth/requestcode
+   * Requests activation code for non-activated user.
+   * Query: ?email=...
+   * Response: 200 ActivationCodeSentResponse | 400 ErrorResponse
    */
   router.get('/requestcode', limiters.requestCodeLimiter, async (req, res) => {
     const email = req.query.email as string;
@@ -176,7 +221,9 @@ export function createAuthRouter(limiters: {
   });
 
   /**
-   * /refresh endpoint
+   * POST /auth/refresh
+   * Refreshes access token using refresh token from cookies.
+   * Response: 200 AccessTokenResponse | 401 ErrorResponse
    */
   router.post('/refresh', limiters.apiLimiter, async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
@@ -221,7 +268,10 @@ export function createAuthRouter(limiters: {
   });
 
   /**
-   * /resetpassword endpoint
+   * GET /auth/resetpassword
+   * Requests password reset code for activated user.
+   * Query: ?email=...
+   * Response: 204 No Content | 400 ErrorResponse
    */
   router.get(
     '/resetpassword',
@@ -249,7 +299,10 @@ export function createAuthRouter(limiters: {
   );
 
   /**
-   * /verifyresetcode endpoint
+   * GET /auth/verifyresetcode
+   * Verifies reset code and resets password.
+   * Query: ?email=...&code=...
+   * Response: 204 No Content | 400/401 ErrorResponse
    */
   router.get('/verifyresetcode', limiters.apiLimiter, async (req, res) => {
     const { code, email } = req.query as VerifyResetQuery;
@@ -277,7 +330,9 @@ export function createAuthRouter(limiters: {
   });
 
   /**
-   * /logout endpoint
+   * POST /auth/logout
+   * Logs out user and removes refresh token.
+   * Response: 204 No Content
    */
   router.post('/logout', limiters.apiLimiter, async (req, res) => {
     try {

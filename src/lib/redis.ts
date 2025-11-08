@@ -21,6 +21,13 @@ redis.on('error', (err) => {
 export async function connectRedis() {
   if (!redis.isOpen) {
     await redis.connect();
-    logger.debug('Connected to Redis');
+    logger.info('Connected to Redis');
+  }
+}
+
+export async function disconnectRedis() {
+  if (redis.isOpen) {
+    await redis.disconnect();
+    logger.info('Disconnected from Redis');
   }
 }

@@ -1,3 +1,4 @@
+import http from 'http';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -6,11 +7,11 @@ import express from 'express';
 import * as OpenApiValidator from 'express-openapi-validator';
 import YAML from 'yamljs';
 import { ENV } from './env';
-import { connectRedis } from './lib/redis';
+import { connectRedis, disconnectRedis } from './lib/redis';
 import { errorHandler } from './middleware/errorHandler';
 import { createLimiters } from './middleware/limiters';
 import { requestLogger } from './middleware/requestLogger';
-import { connectMongo } from './mongo';
+import { connectMongo, disconnectMongo } from './mongo';
 import { createAuthRouter } from './routes/auth';
 import { createOrdersRouter } from './routes/orders';
 import { createUsersRouter } from './routes/users';
@@ -42,7 +43,7 @@ app.use(
   }),
 );
 
-app.use(errorHandler);
+let server: http.Server;
 
 async function bootstrap() {
   await connectMongo();
@@ -61,10 +62,34 @@ async function bootstrap() {
   );
   app.use('/profile', createUsersRouter({ apiLimiter: limiters.apiLimiter }));
   app.use('/orders', createOrdersRouter({ apiLimiter: limiters.apiLimiter }));
+  app.use(errorHandler);
 
-  app.listen(ENV.PORT, () => {
-    logger.debug(`Server running at http://localhost:${ENV.PORT}`);
+  server = app.listen(ENV.PORT, () => {
+    logger.info(`Server running at http://localhost:${ENV.PORT}`);
   });
 }
 
-bootstrap().catch(console.error);
+bootstrap().catch(logger.error);
+
+// Graceful shutdown
+const shutdown = async () => {
+  logger.info('Shutting down gracefully...');
+  server.close(async (err) => {
+    if (err) {
+      logger.error('Error during server close', err);
+      process.exit(1);
+    }
+    try {
+      await disconnectMongo();
+      await disconnectRedis();
+      logger.info('Shutdown complete');
+      process.exit(0);
+    } catch (e) {
+      logger.error('Error during shutdown', e);
+      process.exit(1);
+    }
+  });
+};
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

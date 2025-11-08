@@ -1,3 +1,16 @@
+/**
+ * Users Router Module
+ *
+ * Provides endpoints for user account information and password management.
+ *
+ * Endpoints:
+ *   - GET  /users/me              Get current authenticated user info
+ *   - POST /users/changepassword  Change password for authenticated user
+ *
+ * All endpoints require authentication and are rate-limited.
+ *
+ * @module routes/users
+ */
 import { User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { Router } from 'express';
@@ -12,11 +25,25 @@ type AccountInfoResponse = components['schemas']['AccountInfoResponse'];
 type ErrorResponse = components['schemas']['ErrorResponse'];
 type ChangePasswordRequest = components['schemas']['ChangePasswordRequest'];
 
+/**
+ * Creates an Express router for user-related endpoints.
+ *
+ * @param {Object} limiters - Object containing rate limiters for endpoints.
+ * @param {RateLimitRequestHandler} limiters.apiLimiter - General API limiter.
+ * @returns {Router} Configured Express router.
+ */
 export function createUsersRouter(limiters: {
   apiLimiter: RateLimitRequestHandler;
 }): Router {
   const router = Router();
 
+  /**
+   * GET /users/me
+   * Returns information about the currently authenticated user.
+   * Requires authentication.
+   *
+   * Response: 200 AccountInfoResponse
+   */
   router.get('/me', limiters.apiLimiter, authMiddleware, async (req, res) => {
     const user: User = (req as any).user as User;
     const contact = await getContacts({ EMAIL: user.email });
@@ -31,6 +58,14 @@ export function createUsersRouter(limiters: {
     res.status(200).json(accountInfoResponse);
   });
 
+  /**
+   * POST /users/changepassword
+   * Changes the password for the authenticated user.
+   * Requires authentication.
+   *
+   * Body: { oldPassword: string, newPassword: string }
+   * Response: 204 No Content | 403 ErrorResponse (if old password invalid)
+   */
   router.post(
     '/changepassword',
     limiters.apiLimiter,

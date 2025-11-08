@@ -10,9 +10,10 @@ export class CachedBitrixService {
   static async call<T = any>(
     method: string,
     params: Record<string, any> = {},
-    ttl: number = DEFAULT_CACHE_TTL,
+    ttl: number | null = DEFAULT_CACHE_TTL,
   ): Promise<T> {
-    if (!redis.isOpen) return BitrixService.call<T>(method, params);
+    if (!redis.isOpen || ttl === null)
+      return BitrixService.call<T>(method, params);
 
     const cacheKey = `${CACHE_PREFIX}${method}:${JSON.stringify(params)}`;
     const cached = await redis.get(cacheKey);
@@ -27,7 +28,9 @@ export class CachedBitrixService {
     logger.debug(`Call to BX: ${method}`);
     const result = await BitrixService.call<T>(method, params);
 
-    await redis.set(cacheKey, JSON.stringify(result), { EX: ttl });
+    await redis.set(cacheKey, JSON.stringify(result), {
+      expiration: { type: 'EX', value: ttl },
+    });
 
     return result;
   }

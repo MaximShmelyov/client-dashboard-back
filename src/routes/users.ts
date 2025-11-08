@@ -17,8 +17,11 @@ import { Router } from 'express';
 import { RateLimitRequestHandler } from 'express-rate-limit';
 import { ENV } from '../env';
 import { authMiddleware } from '../middleware/auth';
+import { verifiedMiddleware } from '../middleware/verified';
 import { prisma } from '../prisma';
+import { createCallbackRequest } from '../services/callback.service';
 import { getContacts } from '../services/contacts.service';
+import { Contact } from '../types/bitrix';
 import { components } from '../types/openapi';
 
 type AccountInfoResponse = components['schemas']['AccountInfoResponse'];
@@ -99,6 +102,18 @@ export function createUsersRouter(limiters: {
         },
       });
 
+      res.sendStatus(204);
+    },
+  );
+
+  router.get(
+    '/requestcallback',
+    limiters.apiLimiter,
+    authMiddleware,
+    verifiedMiddleware,
+    async (req, res) => {
+      const contact = (req as any).contact as Contact;
+      await createCallbackRequest(Number.parseInt(contact.ID));
       res.sendStatus(204);
     },
   );

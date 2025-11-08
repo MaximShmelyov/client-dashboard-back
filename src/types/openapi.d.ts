@@ -544,6 +544,114 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/profile/requestcallback': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Request callback from manager */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Callback requested */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden. Blocked, inactive or unverified user */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/profile/requestcalculation': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Request calculation */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          'multipart/form-data': components['schemas']['RequestCalculationRequest'];
+        };
+      };
+      responses: {
+        /** @description Calculation requested */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden. Blocked, inactive or unverified user */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/orders': {
     parameters: {
       query?: never;
@@ -699,6 +807,21 @@ export interface components {
       /** @example MyNewSecurePass123 */
       newPassword: string;
     };
+    RequestCalculationRequest: {
+      originCountry: components['schemas']['OriginCountry'];
+      transportType: components['schemas']['TransportType'];
+      /** @example Automotive parts */
+      title: string;
+      /** @description Weight in KG */
+      weight: number;
+      volume: number;
+      /** @example https://factory.domain/carparts.png */
+      link?: string;
+      /** Format: binary */
+      photo?: string;
+      /** @example Please call ASAP */
+      comment?: string;
+    };
     RegisteredResponse: {
       /** @example User registered */
       message?: string;
@@ -731,6 +854,10 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    /** @enum {string} */
+    OriginCountry: 'china' | 'europe' | 'turkey' | 'other';
+    /** @enum {string} */
+    TransportType: 'sea' | 'air' | 'rail' | 'auto';
     /** @enum {string} */
     OrderStatus: 'new' | 'processing' | 'shipped' | 'delivered' | 'canceled';
     /** @enum {string} */

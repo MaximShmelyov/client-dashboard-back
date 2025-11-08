@@ -304,6 +304,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /profile/requestcallback:
+    get:
+      tags: [Profile]
+      summary: Request callback from manager
+      responses:
+        '204':
+          description: Callback requested
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden. Blocked, inactive or unverified user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /profile/requestcalculation:
+    post:
+      tags: [Profile]
+      summary: Request calculation
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RequestCalculationRequest'
+      responses:
+        '204':
+          description: Calculation requested
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden. Blocked, inactive or unverified user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /orders:
     get:
@@ -443,6 +488,34 @@ components:
           minLength: 8
           example: MyNewSecurePass123
 
+    RequestCalculationRequest:
+      type: object
+      required: [originCountry, transportType, title, weight, volume]
+      properties:
+        originCountry:
+          $ref: '#/components/schemas/OriginCountry'
+        transportType:
+          $ref: '#/components/schemas/TransportType'
+        title:
+          type: string
+          example: Automotive parts
+        weight:
+          type: integer
+          minimum: 0
+          description: Weight in KG
+        volume:
+          type: integer
+          minimum: 0
+        link:
+          type: string
+          example: 'https://factory.domain/carparts.png'
+        photo:
+          type: string
+          format: binary
+        comment:
+          type: string
+          example: Please call ASAP
+
     RegisteredResponse:
       type: object
       properties:
@@ -506,6 +579,14 @@ components:
         - email
         - verifiedClient
         - createdAt
+
+    OriginCountry:
+      type: string
+      enum: [china, europe, turkey, other]
+
+    TransportType:
+      type: string
+      enum: [sea, air, rail, auto]
 
     OrderStatus:
       type: string

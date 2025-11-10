@@ -620,11 +620,13 @@ export interface paths {
       };
       responses: {
         /** @description Calculation requested */
-        204: {
+        200: {
           headers: {
             [name: string]: unknown;
           };
-          content?: never;
+          content: {
+            'application/json': components['schemas']['RequestCalculationResponse'];
+          };
         };
         /** @description Unauthorized */
         401: {
@@ -813,14 +815,19 @@ export interface components {
       /** @example Automotive parts */
       title: string;
       /** @description Weight in KG */
-      weight: number;
-      volume: number;
+      weight: string;
+      /** @description Volume in m^3 */
+      volume: string;
       /** @example https://factory.domain/carparts.png */
       link?: string;
       /** Format: binary */
       photo?: string;
       /** @example Please call ASAP */
       comment?: string;
+    };
+    RequestCalculationResponse: {
+      /** @description True IFF file uploaded failed */
+      fileUploadFailed?: boolean;
     };
     RegisteredResponse: {
       /** @example User registered */

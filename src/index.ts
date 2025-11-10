@@ -40,6 +40,7 @@ app.use(
     apiSpec,
     validateRequests: true,
     validateResponses: true,
+    ignorePaths: /\/profile\/requestcalculation/i, // ignore multipart/form-data endpoint as it breaks them
   }),
 );
 
@@ -69,7 +70,7 @@ async function bootstrap() {
   });
 }
 
-bootstrap().catch(logger.error);
+bootstrap().catch((e) => logger.error(e));
 
 // Graceful shutdown
 const shutdown = async () => {

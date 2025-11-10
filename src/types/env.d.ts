@@ -11,6 +11,7 @@ declare namespace NodeJS {
     ACTIVATION_CODE_TTL_MINUTES: string;
     RESET_CODE_TTL_MINUTES: string;
     BITRIX_CALLBACK_RECORD_TITLE: string;
+    BITRIX_CALCULATION_REQUEST_RECORD_TITLE: string;
     BITRIX_URL: string;
   }
 }

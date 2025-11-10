@@ -23,7 +23,8 @@ export class BitrixService {
         throw new Error(`${data.error}: ${data.error_description}`);
       return data as T;
     } catch (err) {
-      logger.error(`[Bitrix Error] ${method}:`, err?.message);
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.error(`[Bitrix Error] ${method}: ${msg}`);
       throw err;
     }
   }

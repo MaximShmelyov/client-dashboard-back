@@ -8,8 +8,6 @@ const prismaBase = new PrismaClient({
 export const prisma = prismaBase.$extends({
   query: {
     $allModels: {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       async $allOperations({ model, operation, args, query }) {
         const start = Date.now();
         try {

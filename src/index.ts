@@ -25,7 +25,7 @@ app.use(requestLogger);
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ['http://localhost:5173', 'http://localhost:8081'], // web + expo dev
+    origin: ['http://192.168.0.225:5173' /*, 'http://localhost:8081'*/], // web + expo dev
     credentials: true,
   }),
 );

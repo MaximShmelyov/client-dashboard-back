@@ -7,10 +7,10 @@ info:
     Provides authentication and user management for web and mobile clients.
 
 servers:
-  - url: http://192.168.0.225:4000
-    description: Local development
   - url: https://dev.api.makestack.eu
     description: Dev server
+  - url: http://192.168.0.225:4000
+    description: Local development
 
 tags:
   - name: Auth
@@ -51,6 +51,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
 
   /auth/requestcode:
     get:
@@ -79,6 +81,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
 
   /auth/activate:
     get:
@@ -119,6 +123,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
 
   /auth/login:
     post:
@@ -162,6 +168,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
 
   /auth/refresh:
     post:
@@ -181,6 +189,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
 
   /auth/resetpassword:
     get:
@@ -204,6 +214,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
 
   /auth/verifyresetcode:
     get:
@@ -239,6 +251,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
+
   /auth/logout:
     post:
       tags: [Auth]
@@ -252,6 +267,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
+
   /profile/me:
     get:
       tags: [Profile]
@@ -275,6 +293,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
+
   /profile/changepassword:
     post:
       tags: [Profile]
@@ -306,6 +327,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
+
   /profile/requestcallback:
     get:
       tags: [Profile]
@@ -325,6 +349,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
 
   /profile/requestcalculation:
     post:
@@ -355,6 +381,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
 
   /orders:
     get:
@@ -384,6 +412,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
+
   /orders/detailed:
     get:
       tags: [Orders]
@@ -419,6 +450,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
+
 components:
   parameters:
     PageParam:
@@ -454,6 +488,15 @@ components:
       schema:
         $ref: '#/components/schemas/OrderSort'
       description: Sort order
+
+  responses:
+    TooManyRequestsError:
+      description: Too Many Requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
   schemas:
     RegisterRequest:
       type: object

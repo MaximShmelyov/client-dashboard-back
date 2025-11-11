@@ -65,8 +65,8 @@ async function bootstrap() {
   app.use('/orders', createOrdersRouter({ apiLimiter: limiters.apiLimiter }));
   app.use(errorHandler);
 
-  server = app.listen(ENV.PORT, () => {
-    logger.info(`Server running at http://localhost:${ENV.PORT}`);
+  server = app.listen(ENV.PORT, '0.0.0.0', () => {
+    logger.info(`Server running at port ${ENV.PORT}`);
   });
 }
 

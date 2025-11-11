@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const ENV = {
-  PORT: process.env.PORT || 4000,
+  PORT: Number(process.env.PORT) || 4000,
   ENVIRONMENT: process.env.ENVIRONMENT,
   PASSWORD_ROUNDS: Number(process.env.PASSWORD_ROUNDS!),
   ACCESS_SECRET: process.env.JWT_ACCESS_SECRET!,

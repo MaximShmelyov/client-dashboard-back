@@ -12,7 +12,7 @@
  * @module routes/users
  */
 import { User } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 // import { Request } from 'express';
 import { RateLimitRequestHandler } from 'express-rate-limit';
@@ -28,7 +28,6 @@ import { getContacts } from '../services/contacts.service';
 import { Contact } from '../types/bitrix';
 import { components } from '../types/openapi';
 import calculationRequestToString from '../utils/bitrixCalculationRequestConverter';
-import { logger } from '../utils/logger';
 import { createMulterS3ImageUploader } from '../utils/multerS3ImageUploader';
 import { createS3Client } from '../utils/s3Client';
 
@@ -172,10 +171,10 @@ export function createUsersRouter(limiters: {
     authMiddleware,
     verifiedMiddleware,
     (req, res, next) => {
-      logger.debug(`Uploading photo to S3 storage.`);
+      req.log.debug(`Uploading photo to S3 storage.`);
       multerS3Uploader.single('photo')(req, res, function (err) {
         if (err) {
-          logger.error(`Got error in multerUploader.single: ${err}`);
+          req.log.error(`Got error in multerUploader.single: ${err}`);
           req.file = undefined;
           req.fileUploadFailed = true;
         }
@@ -191,9 +190,9 @@ export function createUsersRouter(limiters: {
       if (req.file) {
         const file = req.file as MulterS3File;
         photoUrl = `${ENV.S3_PUBLIC_URL}${file.key}`;
-        logger.debug(`Photo already uploaded to S3: ${photoUrl}`);
+        req.log.info(`Photo already uploaded to S3: ${photoUrl}`);
       } else {
-        logger.debug(`Got no file in calculation request`);
+        req.log.debug(`Got no file in calculation request`);
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars

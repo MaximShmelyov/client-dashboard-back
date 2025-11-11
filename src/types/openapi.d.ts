@@ -54,6 +54,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     delete?: never;
@@ -100,6 +101,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     put?: never;
@@ -158,6 +160,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     put?: never;
@@ -229,6 +232,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     delete?: never;
@@ -274,6 +278,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     delete?: never;
@@ -317,6 +322,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     put?: never;
@@ -372,6 +378,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     put?: never;
@@ -417,6 +424,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     delete?: never;
@@ -469,6 +477,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     put?: never;
@@ -536,6 +545,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     delete?: never;
@@ -586,6 +596,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     put?: never;
@@ -646,6 +657,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     delete?: never;
@@ -707,6 +719,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     put?: never;
@@ -772,6 +785,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
+        429: components['responses']['TooManyRequestsError'];
       };
     };
     put?: never;
@@ -910,7 +924,17 @@ export interface components {
       } | null;
     };
   };
-  responses: never;
+  responses: {
+    /** @description Too Many Requests */
+    TooManyRequestsError: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/json': components['schemas']['ErrorResponse'];
+      };
+    };
+  };
   parameters: {
     /** @description Page */
     PageParam: number;

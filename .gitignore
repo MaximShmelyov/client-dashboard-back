@@ -1,3 +1,5 @@
 /.idea/
 .env
+.env.local.docker
+.env.production
 /node_modules

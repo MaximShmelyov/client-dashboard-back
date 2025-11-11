@@ -9,13 +9,15 @@
     "generate:clientapi": "npx swagger-typescript-api generate -p openapi/v1/schema.yaml -o ../client-dashboard/packages/shared/lib/api/",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prisma:generate": "prisma generate",
+    "start": "dotenv -- node dist/index.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.927.0",
-    "@prisma/client": "^6.18.0",
+    "@prisma/client": "^6.19.0",
     "axios": "^1.13.2",
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -31,7 +33,7 @@
     "pino-pretty": "^13.1.2",
     "rate-limit-redis": "^4.2.3",
     "redis": "^5.9.0",
-    "uuid": "^13.0.0",
+    "uuid": "^8.3.2",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
@@ -42,7 +44,9 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.25",
     "@types/jsonwebtoken": "^9.0.2",
+    "@types/uuid": "^10.0.0",
     "@types/yamljs": "^0.2.34",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9.38.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
@@ -53,7 +57,7 @@
     "jiti": "^2.6.1",
     "openapi-typescript": "^7.10.1",
     "prettier": "^3.6.2",
-    "prisma": "^6.18.0",
+    "prisma": "^6.19.0",
     "swagger-typescript-api": "^13.2.16",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3",

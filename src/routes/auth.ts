@@ -21,7 +21,7 @@
  *
  * @module routes/auth
  */
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import { RateLimitRequestHandler } from 'express-rate-limit';
 import { ENV } from '../env';
@@ -213,6 +213,7 @@ export function createAuthRouter(limiters: {
 
     const code = await authService.requestCode(user.id);
     // @TODO: request code sending
+    req.log.info(`Generated code: ${code}`);
 
     const activationCodeSentResponse: ActivationCodeSentResponse = {
       message: 'Activation code sent',
@@ -292,7 +293,7 @@ export function createAuthRouter(limiters: {
 
       const resetCode = resetAuthService.requestResetCode(user.id);
       // @TODO: send reset code to user
-      req.log.debug(`Reset code: ${resetCode} for user ${user.id} generated.`);
+      req.log.info(`Reset code: ${resetCode} for user ${user.id} generated.`);
 
       res.sendStatus(204);
     },

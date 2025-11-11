@@ -7,6 +7,7 @@ export const redis = createClient({
   password: ENV.REDIS_SECRET,
   socket: {
     reconnectStrategy(retries) {
+      logger.info(`Retrying Redis, attempt ${retries + 1}`);
       if (retries >= ENV.REDIS_MAX_RETRY_COUNT)
         return new Error('Max retries reached.');
       return 1000 /* Wait for 1 second */;
@@ -15,7 +16,7 @@ export const redis = createClient({
 });
 
 redis.on('error', (err) => {
-  logger.error('Redis Client Error', err);
+  logger.error(`Redis Client Error ${err}`);
 });
 
 export async function connectRedis() {

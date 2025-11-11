@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { ENV } from '../env';
 import { prisma } from '../prisma';
 import { ResetRepository } from '../repositories/reset.repository';

@@ -33,12 +33,12 @@ app.use(
 const apiSpec = path.join(__dirname, '..', 'openapi', 'v1', 'schema.yaml');
 const swaggerDoc = YAML.load(apiSpec);
 
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
+// Log client IP
 app.use((req, res, next) => {
-  const clientIp = req.headers['x-real-ip'] || req.ip;
-  req.log.info(`Client IP: ${clientIp}`);
-  req.log.info(`Request.ip is ${req.ip}`);
+  const clientIp = req.headers['x-real-ip'];
+  req.log.info(`Client IP: ${clientIp}, Request.ip is ${req.ip}`);
   next();
 });
 

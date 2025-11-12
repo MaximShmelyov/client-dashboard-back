@@ -4,8 +4,6 @@ services:
     container_name: client-dashboard-backend-api
     restart: always
     env_file: .env.local.docker
-    ports:
-      - '4000:4000'
     depends_on:
       - postgres
       - mongo
@@ -51,8 +49,6 @@ services:
       ]
     environment:
       REDIS_SECRET: ${REDIS_SECRET}
-    ports:
-      - '6379:6379'
     networks:
       - client-dashboard-backend-network
 

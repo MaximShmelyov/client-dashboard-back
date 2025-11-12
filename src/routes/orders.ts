@@ -111,20 +111,35 @@ export function createOrdersRouter(limiters: {
         sort,
         bitrixStart,
       );
+      let slicedDeals = deals.result.slice(
+        bitrixOffset,
+        bitrixOffset + ordersQuery.pageSize,
+      );
 
-      const orders: Order[] = deals.result
-        .slice(bitrixOffset, bitrixOffset + ordersQuery.pageSize)
-        .map((deal) => {
-          return {
-            id: Number(deal.ID),
-            code: deal.ID,
-            date: deal.DATE_CREATE
-              ? convertDateToISO(deal.DATE_CREATE)
-              : undefined,
-            status: toOrderStatus(deal.STAGE_ID),
-            title: deal.TITLE,
-          };
+      // Since BX ignores STAGE_ID sort, do it ourselves
+      if (
+        ordersQuery.sort === 'statusAsc' ||
+        ordersQuery.sort === 'statusDesc'
+      ) {
+        const direction = ordersQuery.sort === 'statusAsc' ? 1 : -1;
+        slicedDeals = slicedDeals.sort((a, b) => {
+          const aStage = a.STAGE_ID ?? '';
+          const bStage = b.STAGE_ID ?? '';
+          return direction * aStage.localeCompare(bStage);
         });
+      }
+
+      const orders: Order[] = slicedDeals.map((deal) => {
+        return {
+          id: Number(deal.ID),
+          code: deal.ID,
+          date: deal.DATE_CREATE
+            ? convertDateToISO(deal.DATE_CREATE)
+            : undefined,
+          status: toOrderStatus(deal.STAGE_ID),
+          title: deal.TITLE,
+        };
+      });
 
       const ordersResponse: OrdersResponse = {
         orders,

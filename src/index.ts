@@ -37,8 +37,7 @@ app.set('trust proxy', 1);
 
 // Log client IP
 app.use((req, res, next) => {
-  const clientIp = req.headers['x-real-ip'];
-  req.log.info(`Client IP: ${clientIp}, Request.ip is ${req.ip}`);
+  req.log.info(`Request.ip is ${req.ip}`);
   next();
 });
 

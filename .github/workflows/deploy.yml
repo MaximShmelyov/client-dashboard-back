@@ -48,5 +48,8 @@ jobs:
             git fetch origin $BRANCH
             git checkout $BRANCH
             git pull origin $BRANCH
-            docker compose pull backend || true
-            docker compose up -d --build backend
+            if ! docker compose pull backend; then
+              echo "Pull failed, building backend locally..."
+              docker compose build backend
+            fi
+            docker compose up -d backend

@@ -43,6 +43,10 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT }}
           script: |
+            BRANCH="vpsdeploy"
             cd /home/${{ secrets.VPS_USER }}/apps/client-dashboard-back
+            git fetch origin $BRANCH
+            git checkout $BRANCH
+            git pull origin $BRANCH
             docker compose pull backend || true
             docker compose up -d --build backend

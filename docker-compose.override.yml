@@ -1,7 +1,9 @@
 services:
   backend:
     image: ghcr.io/maximshmelyov/client-dashboard-back/backend:latest
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: client-dashboard-backend-api
     restart: always
     env_file: .env.local.docker

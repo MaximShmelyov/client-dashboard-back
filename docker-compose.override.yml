@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ghcr.io/maximshmelyov/client-dashboard-backend:latest
+    image: ghcr.io/maximshmelyov/client-dashboard-back/backend:latest
     container_name: client-dashboard-backend-api
     restart: always
     env_file: .env.local.docker

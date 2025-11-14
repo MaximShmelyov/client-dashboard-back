@@ -6,7 +6,7 @@ const blacklistedIpList = (ENV.BLACKLISTED_IPS || '')
   .map((ip) => ip.trim())
   .filter(Boolean);
 
-export async function blacklistedIps(
+export async function blockBlacklistedIps(
   req: Request,
   res: Response,
   next: NextFunction,

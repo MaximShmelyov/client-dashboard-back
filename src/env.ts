@@ -41,4 +41,5 @@ export const ENV = {
     ? Number(process.env.CALCULATION_REQUEST_PHOTO_MAX_FILESIZE_IN_MB!)
     : 20,
   FRONTEND_PUBLIC_URL_CORS: process.env.FRONTEND_PUBLIC_URL_CORS!,
+  BLACKLISTED_IPS: process.env.BLACKLISTED_IPS!,
 };

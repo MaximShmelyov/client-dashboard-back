@@ -8,6 +8,7 @@ import * as OpenApiValidator from 'express-openapi-validator';
 import YAML from 'yamljs';
 import { ENV } from './env';
 import { connectRedis, disconnectRedis } from './lib/redis';
+import { blacklistedIps } from './middleware/blacklistedIps';
 import { errorHandler } from './middleware/errorHandler';
 import { createLimiters } from './middleware/limiters';
 import { requestLogger } from './middleware/requestLogger';
@@ -35,10 +36,10 @@ const swaggerDoc = YAML.load(apiSpec);
 
 app.set('trust proxy', 1);
 
+app.use(blacklistedIps);
 // Log client IP
 app.use((req, res, next) => {
-  const clientIp = req.headers['x-real-ip'];
-  req.log.info(`Client IP: ${clientIp}, Request.ip is ${req.ip}`);
+  req.log.info(`Request.ip is ${req.ip}`);
   next();
 });
 

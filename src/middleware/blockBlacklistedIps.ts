@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { ENV } from '../env';
+import { logger } from '../utils/logger';
 
 const blacklistedIpList = (ENV.BLACKLISTED_IPS || '')
   .split(',')
@@ -12,7 +13,7 @@ export async function blockBlacklistedIps(
   next: NextFunction,
 ) {
   if (req.ip && blacklistedIpList.includes(req.ip)) {
-    req.log.info(`Blocked request from ${req.ip}`);
+    logger.info(`Blocked request from ${req.ip}`);
     return res.sendStatus(404);
   }
   next();

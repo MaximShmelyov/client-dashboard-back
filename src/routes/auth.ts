@@ -30,6 +30,7 @@ import { AuthService } from '../services/auth.service';
 import { getContacts } from '../services/contacts.service';
 import { ResetAuthService } from '../services/reset.auth.service';
 import { TokenService } from '../services/token.service';
+import { BitrixListResponse, Contact } from '../types/bitrix';
 import { components, paths } from '../types/openapi';
 
 type RegisterRequest = components['schemas']['RegisterRequest'];
@@ -160,7 +161,12 @@ export function createAuthRouter(limiters: {
       };
       return res.status(403).json(notAllowedError);
     }
-    const contact = await getContacts({ EMAIL: user.email });
+    let contact: BitrixListResponse<Contact> | null = null;
+    try {
+      contact = await getContacts({ EMAIL: user.email });
+    } catch (e) {
+      req.log.warn(e);
+    }
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json(invalidCredentialsError);
@@ -184,7 +190,7 @@ export function createAuthRouter(limiters: {
         email: user.email,
         name: user.name || undefined,
         createdAt: user.createdAt.toISOString(),
-        verifiedClient: contact.result.length > 0,
+        verifiedClient: contact ? contact.result.length > 0 : false,
       },
     };
     res.status(200).json(authResponse);

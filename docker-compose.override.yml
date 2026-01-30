@@ -13,3 +13,9 @@ services:
       - redis
     networks:
       - client-dashboard-backend-network
+      - edge
+
+networks:
+  edge:
+    external: true
+    name: edge

@@ -24,8 +24,20 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: maximshmelyov
+          username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PAT }}
+
+      - name: Set image repo name (lowercase)
+        id: repo
+        run: |
+          echo "repo_lowercase=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Set build version
+        id: version
+        run: |
+          DATE=$(date +'%Y%m%d_%H%M%S')
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
+          echo "version=${DATE}_${SHORT_SHA}" >> $GITHUB_OUTPUT
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
@@ -33,7 +45,14 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/maximshmelyov/client-dashboard-back/backend:latest
+          tags: |
+            ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend:latest
+            ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend:${{ steps.version.outputs.version }}
+          labels: |
+            clientdashboardback.image.source=${{ github.repository }}
+            clientdashboardback.image.revision=${{ github.sha }}
+            clientdashboardback.image.created=${{ github.run_id }}
+            clientdashboardback.image.version=${{ steps.version.outputs.version }}
 
       - name: SSH to VPS and deploy updated backend
         uses: appleboy/ssh-action@v1.0.0
@@ -50,5 +69,5 @@ jobs:
             git checkout $BRANCH
             git pull origin $BRANCH
 
-            docker compose pull backend || true
+            docker compose pull backend
             docker compose up -d backend

@@ -1,6 +1,6 @@
 services:
   backend:
-    build: .
+    image: ghcr.io/${REPO_LOWERCASE}/backend:latest
     container_name: client-dashboard-backend-api
     restart: always
     env_file: .env.local.docker

@@ -43,7 +43,9 @@ Production-ready: Dockerized, rate-limited, scalable, and secure.
 git clone https://github.com/maximshmelyov/client-dashboard-back.git
 cd client-dashboard-back
 ```
+
 ### 2. Configure Environment
+
 Copy and edit .env.local.docker (for Docker) or create your own .env.local for local development.
 See .env.example (if available) for required variables.
 Main variables:
@@ -52,9 +54,11 @@ Main variables:
 - MONGO_URI (MongoDB)
 - REDIS_URL, REDIS_SECRET
 - ACCESS_SECRET, REFRESH_SECRET
-- S3_* (for file uploads)
-- BITRIX_* (for CRM integration)
+- S3\_\* (for file uploads)
+- BITRIX\_\* (for CRM integration)
+
 ### 3. Run with Docker Compose
+
 ```bash
 docker compose up --build
 ```
@@ -62,8 +66,11 @@ docker compose up --build
 - Backend: http://localhost:4000
 - Nginx proxy: http://localhost (HTTP/HTTPS)
 - API docs: http://localhost/docs
+
 ### 4. Local Development
+
 Install dependencies and run in watch mode:
+
 ```bash
 npm ci
 npm run dev
@@ -76,6 +83,7 @@ npm run dev
 - Use Swagger UI or Redoc to visualize.
 
 ## Project Structure
+
 ```
 ├── src/
 │   ├── routes/           # Express routers (auth, users, orders)
@@ -94,11 +102,11 @@ npm run dev
 ```
 
 ## Deployment
+
 ### CI/CD
 
 - GitHub Actions workflow: .github/workflows/deploy.yml
 - On push to vpsdeploy branch:
-
   - Build & push Docker image to GHCR
   - SSH to VPS, update code, pull image, restart backend via Docker Compose
 
@@ -118,10 +126,13 @@ npm run dev
 - npm run generate:clientapi — Generate API client for frontend
 
 ## License
+
 MIT (see LICENSE)
 
 ## Author
+
 Maxim Shmelyov (Maksym Shmelov)
 
 ## Contributing
+
 Pull requests and issues welcome!
